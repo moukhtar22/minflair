@@ -1,10 +1,10 @@
 <div align="center">
 
-# t4lentles5 Dotfiles
+# Minflair
 
 **Aesthetic Hyprland rice for Arch Linux — dynamic theming, Quickshell widgets, and a polished workflow out of the box.**
 
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778889772/output_bjbuhy.webp" alt="Preview" />
+<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784959751/output_ubfvlc.gif" alt="Preview" />
 
 </div>
 
@@ -12,13 +12,12 @@
 
 ## ✨ Features
 
-- 🎨 **Dynamic Theming** — switch between 6 color schemes (Default, Tokyo Night, Catppuccin, Gruvbox, Rosé Pine, Kanagawa) with light/dark variants that instantly propagate across **all** apps: Kitty, GTK, Neovim, Yazi, and the bar itself.
-- 🖥️ **Quickshell Bar & Widgets** — custom bar with dashboard, app launcher, clipboard history, wallpaper selector, color scheme selector, screenshot tool, keybinds cheat sheet, notification center, and package manager.
-- 🖼️ **Wallpaper Selector** — browse and apply wallpapers directly from a widget, with separate Dark/Light collections.
-- 🔒 **Lock Screen** — `hyprlock` with custom styling.
-- ⚡ **Zsh** — configured with Starship prompt, fzf-tab, autosuggestions, syntax highlighting, and history substring search.
-- 📝 **Neovim** — full Lua config with lazy.nvim, auto-synced color scheme from the system theme.
-- 📁 **Yazi** — TUI file manager with dynamic theme integration.
+- 🎨 **Dynamic Theming** — Generate custom color schemes dynamically directly from your current wallpaper, alongside 2 default static themes.
+- 🖥️ **Quickshell Integration** — GTK, Neovim, Starship, Kitty, and Hyprland have their colors generated dynamically from Quickshell, ensuring a fully unified system theme.
+- 🖼️ **Wallpaper Selector** — Browse and apply wallpapers directly from a built-in widget.
+- 🔒 **Lock Screen** — Custom Lock Screen built entirely in Quickshell, fully integrated with your dynamic theme.
+- ⚡ **Zsh** — Configured with Starship prompt, fzf-tab, autosuggestions, syntax highlighting, and history substring search.
+- 📝 **Neovim** — Full Lua config with lazy.nvim, auto-synced color scheme.
 
 ---
 
@@ -26,7 +25,7 @@
 
 ```bash
 # Clone this repository (shallow clone to save space and time)
-git clone --depth 1 https://github.com/t4lentles5/t4lentles5-dots.git ~/.dotfiles
+git clone --depth 1 https://github.com/t4lentles5/minflair.git ~/.dotfiles
 
 # Enter the directory
 cd ~/.dotfiles
@@ -64,38 +63,19 @@ cp /path/to/your/avatar.png ~/.face
 
 ### 3. Set your wallpaper
 
-Wallpapers are stored in `~/Pictures/Wallpapers/` and are organized in `Dark/` and `Light/` sub-folders. You can add your own wallpapers to these directories and use the wallpaper selector widget (`Ctrl + Alt + W`) to apply them.
+Wallpapers are stored in `~/Pictures/Wallpapers/`. You can add your own wallpapers to this directory and use the wallpaper selector widget (`Ctrl + Alt + W`) to apply them.
 
 ### 4. Monitor Configuration
 
 The default monitor config is set to auto-detect. If you need custom resolution, refresh rate, or multi-monitor setup, edit:
 
 ```bash
-~/.config/hypr/monitors.conf
+~/.config/hypr/monitors.lua
 ```
 
 Refer to the [Hyprland Wiki — Monitors](https://wiki.hyprland.org/Configuring/Monitors/) for syntax details.
 
-### 5. GitHub Stats Configuration
-
-To display your GitHub statistics (stars, forks, followers, and repository count) in the dashboard widget, you must rename the configuration template and set your username:
-
-```bash
-mv ~/.config/quickshell/Core/GithubConfig_template.qml ~/.config/quickshell/Core/GithubConfig.qml
-```
-
-Open `~/.config/quickshell/Core/GithubConfig.qml` and set your username and token (token is optional, but required to display private repository stats and total commits):
-
-```qml
-QtObject {
-    // Mandatory: Your GitHub username
-    property string username: "your_username"
-    // Optional: GitHub Personal Access Token (needed for private repos and commit count)
-    property string token: "your_token"
-}
-```
-
-### 6. Restore from Backup
+### 5. Restore from Backup
 
 If anything goes wrong, the installer creates a timestamped backup of your previous configuration:
 
@@ -105,29 +85,42 @@ If anything goes wrong, the installer creates a timestamped backup of your previ
 
 ---
 
-## 🖼️ Gallery & Color Schemes
+## 🖥️ Quickshell Widgets
 
-All schemes include both **dark** and **light** variants, instantly switchable via `Ctrl + Alt + C`. When you switch a scheme, the bar, widgets, Kitty, GTK, Neovim, and Yazi are updated **in real time**.
+This rice features a collection of custom widgets built with Quickshell, designed to be fast, interactive, and completely integrated with the system's dynamic styling:
 
-### Themes (Dark / Light)
+- **Main Panel**: A comprehensive hub featuring 3 tabs:
+  - **Dashboard**: GitHub stats (including top repo), media player, package updates, and a random quote.
+  - **Performance**: Real-time monitoring for CPU, RAM, VRAM, and Disk usage.
+  - **Activity**: Daily screen time tracking and your top 5 most used applications.
+    <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784959934/output_ywiy7w.gif" alt="Main Panel Widget" />
 
-**Default**  
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778885444/themes_iw5hxa.webp" alt="Default Theme">
+- **Wallpaper Selector**: An interactive grid browser that lets you preview and apply wallpapers from `~/Pictures/Wallpapers/` on the fly.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960041/Shot-2026-07-25-011333_pf5obb.png" alt="Wallpaper Selector Widget" />
 
-**Tokyo Night**
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778885752/themes_timq9h.webp" alt="Tokyo Night Theme">
+- **Application Launcher**: A clean, keyboard-navigable menu to search and run applications.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960130/Shot-2026-07-25-011503_xwkkzn.png" alt="Application Launcher Widget" />
 
-**Catppuccin**
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778887100/themes_uhmpmk.webp" alt="Catppuccin Theme">
+- **Clipboard History**: A handy widget to browse and paste from your clipboard history.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960192/Shot-2026-07-25-011605_vagu0f.png" alt="Clipboard History Widget" />
 
-**Gruvbox**
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778887374/themes_thdlef.webp" alt="Gruvbox Theme">
+- **Lock Screen**: A fully functional custom lock screen built entirely in Quickshell, fully integrated with your dynamic theme.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960244/Shot-2026-07-25-011657_n2zehm.png" alt="Lock Screen Widget" />
 
-**Rosé Pine**
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778887500/themes_ttddun.webp" alt="Rosé Pine Theme">
+- **Sidebar**: A unified control center featuring quick settings, performance modes and desktop notifications.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960299/Shot-2026-07-25-011753_heeu1y.png" alt="Sidebar Widget" />
 
-**Kanagawa**
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1778887649/themes_ldpgbw.webp" alt="Kanagawa Theme">
+- **Settings App**: A dedicated graphical interface to configure your rice, credentials, and preferences effortlessly without manually editing files.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960346/Shot-2026-07-25-011844_i9st28.png" alt="Settings App" />
+
+- **Screen Capture**: A dedicated tool for taking screenshots and recording your screen.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960406/Shot-2026-07-25-011946_rjobsf.png" alt="Screen Capture Widget" />
+
+- **Package Manager**: A graphical utility to search, install, update, and remove official Arch Linux and AUR packages easily.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960444/Shot-2026-07-25-012024_azxodc.png" alt="Package Manager Widget" />
+
+- **Power Menu**: A sleek menu for session management (shutdown, reboot, suspend, lock, logout).
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960488/Shot-2026-07-25-012106_lovz7x.png" alt="Power Menu Widget" />
 
 ## ⌨️ Keybinds
 
@@ -150,7 +143,7 @@ cp /path/to/avatar.png ~/.face
 <details>
 <summary><b>No wallpapers appear in the wallpaper selector</b></summary>
 
-Make sure `~/Pictures/Wallpapers/Dark/` and `~/Pictures/Wallpapers/Light/` exist and contain image files. The installer copies wallpapers from the repo if the `Wallpapers/` directory is present.
+You must manually place your own wallpapers in the `~/Pictures/Wallpapers/` directory. Create this directory if it doesn't exist and add your images there.
 
 </details>
 
@@ -184,3 +177,13 @@ cat ~/install_errors.log
 If packages failed to install, ensure your mirrors are up to date (`sudo pacman -Syy`) and that your AUR helper is working correctly (`yay -Syu`).
 
 </details>
+
+## 📜 License and Credits
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+### Third-Party Assets
+
+- **Tabler Icons**: Licensed under the [MIT License](https://github.com/tabler/tabler-icons/blob/master/LICENSE).
+- **Material Symbols (Google Fonts)**: Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+- **Material GNOME Theme**: Licensed under the [GNU General Public License v3.0](https://github.com/SakibShahariar/material-gnome-theme/blob/main/LICENSE).

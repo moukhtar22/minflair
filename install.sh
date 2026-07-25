@@ -44,16 +44,17 @@ dependencies=(
   hyprland kitty openssh polkit-kde-agent qt5-wayland qt6-wayland
   smartmontools uwsm vim wget wireless_tools xdg-desktop-portal-hyprland
   xdg-utils bat bc btop cava eza fd fzf gnome-calculator gnome-font-viewer
-  gnome-disk-utility gvfs gvfs-mtp highlight hypridle hyprlock hyprpicker
+  gnome-disk-utility gvfs gvfs-mtp highlight hypridle hyprpicker
   hyprsunset imagemagick inetutils iwd jq lazygit loupe nautilus network-manager-applet
   networkmanager noto-fonts-emoji nwg-look openssl pacman-contrib pamixer pavucontrol
   pipewire pipewire-alsa pipewire-audio pipewire-pulse python-gobject python-pygments
-  python-pip yazi rfkill ripgrep starship ttf-cascadia-code-nerd ttf-jetbrains-mono-nerd
+  python-pip rfkill ripgrep starship ttf-cascadia-code-nerd ttf-jetbrains-mono-nerd
   tumbler unzip upower wireplumber wl-clipboard wlsunset libmtp
   xclip xdg-desktop-portal-gtk zsh zsh-autosuggestions zsh-history-substring-search
   zsh-syntax-highlighting brightnessctl blueman bluez bluez-utils grim slurp cliphist
-  fastfetch neovim curl unrar socat qt6-imageformats mpv fnm polkit-gnome ntfs-3g
-  gnome-keyring libsecret awww playerctl ffmpeg exfatprogs dosfstools gvfs-afc
+  fastfetch neovim curl unrar socat qt6-imageformats mpv fnm polkit-gnome ntfs-3g libnotify
+  gnome-keyring libsecret awww playerctl ffmpeg exfatprogs dosfstools gvfs-afc power-profiles-daemon
+  sof-firmware kew gamemode python-pam less
 )
 
 sudo pacman -S --needed --noconfirm "${dependencies[@]}" ||
@@ -64,14 +65,16 @@ ok "Official dependencies processed."
 log "Installing AUR dependencies..."
 aur_dependencies=(
   bibata-cursor-theme-bin
-  catppuccin-gtk-theme-mocha
-  catppuccin-gtk-theme-latte
   fzf-tab-git
   quickshell
   sddm-theme-tokyo-night-git
   tela-circle-icon-theme-dracula-git
   xxhash
   pokemon-colorscripts-git
+  wallust
+  aw-awatcher
+  activitywatch-bin
+  otf-geist
 )
 
 yay -S --needed --noconfirm "${aur_dependencies[@]}" ||
@@ -133,19 +136,6 @@ else
   warn "home/ not found in repo, skipping."
 fi
 
-# Wallpapers/ → ~/Pictures/Wallpapers/
-if [ -d "$REPO_DIR/Wallpapers" ]; then
-  mkdir -p "$HOME/Pictures/Wallpapers"
-  if [ -n "$(ls -A "$HOME/Pictures/Wallpapers" 2>/dev/null)" ]; then
-    cp -r "$HOME/Pictures/Wallpapers" "$BACKUP_DIR/Wallpapers"
-    ok "Backed up ~/Pictures/Wallpapers → $BACKUP_DIR/Wallpapers"
-  fi
-  cp -r "$REPO_DIR/Wallpapers/." "$HOME/Pictures/Wallpapers/"
-  ok "Wallpapers/ → ~/Pictures/Wallpapers/"
-else
-  warn "Wallpapers/ not found in repo, skipping."
-fi
-
 # ── 4.1. quickshell applications ──────────────────────────────────────────────
 log "Installing Quickshell desktop entries..."
 if [ -d "$REPO_DIR/config/quickshell/Applications" ]; then
@@ -157,6 +147,15 @@ else
 fi
 
 # ── 5. apply GTK theme via gsettings ──────────────────────────────────────────
+log "Installing Material-Gnome theme..."
+if [ ! -d "$HOME/.themes/Material-Gnome" ]; then
+  mkdir -p "$HOME/.themes"
+  git clone https://github.com/SakibShahariar/material-gnome-theme.git "$HOME/.themes/Material-Gnome"
+  ok "Material-Gnome theme installed."
+else
+  ok "Material-Gnome theme already installed."
+fi
+
 log "Applying GTK theme..."
 if [ -f "$HOME/.config/gtk-3.0/settings.ini" ]; then
   SCHEMA="org.gnome.desktop.interface"
@@ -243,9 +242,9 @@ else
 fi
 
 # ── 10. Enable system services ────────────────────────────────────────────────
-log "Checking and enabling system services (NetworkManager, bluetooth)..."
+log "Checking and enabling system services (NetworkManager, bluetooth, power-profiles-daemon)..."
 
-for svc in NetworkManager.service bluetooth.service; do
+for svc in NetworkManager.service bluetooth.service power-profiles-daemon.service; do
   if ! systemctl is-enabled --quiet "$svc" 2>/dev/null || ! systemctl is-active --quiet "$svc" 2>/dev/null; then
     log "Enabling and starting $svc..."
     sudo systemctl enable --now "$svc" || warn "Failed to enable $svc."
