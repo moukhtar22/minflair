@@ -1,52 +1,35 @@
 format = """
-[╭──](fg:blue) $os$username$directory $git_branch$git_status
-[╰──](fg:blue)$character"""
+[╭──](fg:accent) $username$directory $git_branch$git_status
+[╰──](fg:accent)$character
+"""
 
 command_timeout = 5001
-add_newline = true
+add_newline = false
 palette = "quickshell"
 
-[os]
-format = "[$symbol](bold fg:blue)"
-disabled = false
-
-[os.symbols]
-Windows = " "
-Arch = "󰣇 "
-
 [username]
-style_user = "fg:bg bold bg:purple bold"
+style_user = "fg:bg bold bg:accent bold"
 style_root = "bg bold"
-format = "[](bold fg:purple)[$user]($style)[ ](bold fg:purple)"
+format = "[](bold fg:accent)[$user]($style)[ ](bold fg:accent)"
 disabled = false
 show_always = true
 
 [directory]
-style = "bg:purple fg:bg"
-format = '󰜥 [](bold fg:purple)[󰉋 $path]($style)[](bold fg:purple)'
+style = "bg:accent fg:bg"
+format = '󰜥 [](bold fg:accent)[󰉋 $path]($style)[](bold fg:accent)'
 
 [character]
-success_symbol = "[](bold fg:blue)"
-error_symbol = "[](bold fg:red)"
+success_symbol = "[](bold fg:accent)"
+error_symbol = "[](bold fg:accentComplementary)"
 
 [git_branch]
-style = "bg: cyan"
+style = "bg: accent"
 symbol = "󰘬"
 truncation_length = 13
 truncation_symbol = ""
-format = "[](bold fg:purple)[$symbol $branch(:$remote_branch)](fg:bg bg:purple)[ ](bold fg:purple)"
+format = "[](bold fg:accent)[$symbol $branch(:$remote_branch)](fg:bg bg:accent)[ ](bold fg:accent)"
 
 # --- Quickshell Palette ---
 [palettes.quickshell]
 bg = "#09080c"
-bgSecondary = "#110f19"
-fg = "#e9e8ec"
-muted = "#534c65"
-cyan = "#b0a1dc"
-purple = "#d0c7ea"
-red = "#917cce"
-pink = "#c9bfe7"
-yellow = "#c0b4e3"
-orange = "#baace0"
-blue = "#8169c8"
-green = "#a18fd5"
+accent = "#9b55dc"

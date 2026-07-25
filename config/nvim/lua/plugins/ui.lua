@@ -151,28 +151,6 @@ return {
   },
 
   {
-    "akinsho/bufferline.nvim",
-    version = "*",
-    dependencies = "nvim-tree/nvim-web-devicons",
-    opts = {
-      options = {
-        mode = "buffers",
-        separator_style = "slant",
-        show_buffer_close_icons = true,
-        show_close_icon = true,
-        offsets = {
-          {
-            filetype = "neo-tree",
-            text = "File Explorer",
-            highlight = "Directory",
-            text_align = "left",
-          },
-        },
-      },
-    },
-  },
-
-  {
     "goolord/alpha-nvim",
     event = "VimEnter",
     config = function()

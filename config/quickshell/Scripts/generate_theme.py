@@ -75,6 +75,25 @@ def color_distance(c1, c2):
     return (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2
 
 
+def blend_colors(color1, color2, weight):
+    r1, g1, b1 = int(color1[1:3], 16), int(color1[3:5], 16), int(color1[5:7], 16)
+    r2, g2, b2 = int(color2[1:3], 16), int(color2[3:5], 16), int(color2[5:7], 16)
+    r = clamp_rgb(r1 * (1.0 - weight) + r2 * weight)
+    g = clamp_rgb(g1 * (1.0 - weight) + g2 * weight)
+    b = clamp_rgb(b1 * (1.0 - weight) + b2 * weight)
+    return to_hex(r, g, b)
+
+
+def darken_color(color_hex, factor):
+    r = int(color_hex[1:3], 16)
+    g = int(color_hex[3:5], 16)
+    b = int(color_hex[5:7], 16)
+    r = clamp_rgb(r / factor)
+    g = clamp_rgb(g / factor)
+    b = clamp_rgb(b / factor)
+    return to_hex(r, g, b)
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: generate_theme.py <image_path>")
@@ -90,6 +109,10 @@ def main():
         cmd_mean = [
             "magick",
             image_path + "[0]",
+            "-background",
+            "black",
+            "-alpha",
+            "remove",
             "-colorspace",
             "gray",
             "-format",
@@ -147,6 +170,10 @@ def main():
         cmd_magick = [
             "magick",
             image_path + "[0]",
+            "-background",
+            "black",
+            "-alpha",
+            "remove",
             "-resize",
             "100x100",
             "-colors",
@@ -251,272 +278,66 @@ def main():
         dominant_hue = 0.0
         dominant_sat = 0.0
 
-    # Determine if monochromatic (single hue family or grayscale)
-    is_monochromatic = True
-    if is_dominantly_colorful:
-        # Check if there's any OTHER colorful hue family with significant presence
-        other_hues = [
-            c
-            for c in accent_candidates
-            if get_chroma(c) >= 0.08 and hue_distance(c["h"], dominant_hue) > 45
-        ]
-        for c in other_hues:
-            if total_colorful_pixels > 0 and (
-                c["pixels"] >= 0.10 * total_colorful_pixels
-            ):
-                is_monochromatic = False
-                break
+    # Generate background, foreground, and muted colors based on wallpaper
+    bg_s = max(0.10, min(0.20, dominant_sat * 0.5))
+    bg_val = force_hsl(
+        dominant_hue, bg_s, bg_color["l"], bg_s, 0.04 if is_dark else 0.92
+    )
 
-    generated = {}
+    # Monochromatic generation: ONLY use the top 2-3 most frequent colors
+    sorted_by_pixels = sorted(color_objs, key=lambda c: c["pixels"], reverse=True)
+    top_colors = sorted_by_pixels[:3]
 
-    if is_monochromatic:
-        # Monochromatic generation: ONLY use the top 2-3 most frequent colors
-        sorted_by_pixels = sorted(color_objs, key=lambda c: c["pixels"], reverse=True)
-        top_colors = sorted_by_pixels[:3]
-
-        colorful_top = [c for c in top_colors if get_chroma(c) >= 0.08]
-        if colorful_top:
-            primary_accent = max(colorful_top, key=get_chroma)
-        else:
-            primary_accent = top_colors[0]
-
-        is_grayscale_theme = get_chroma(primary_accent) < 0.08
-
-        if is_grayscale_theme:
-            # Grayscale layouts
-            bg_val = force_hsl(0, 0.0, bg_color["l"], 0.0, 0.04 if is_dark else 0.92)
-            bg_sec_val = force_hsl(
-                0, 0.0, bg_color["l"], 0.0, 0.08 if is_dark else 0.85
-            )
-            bg_ter_val = force_hsl(
-                0, 0.0, bg_color["l"], 0.0, 0.12 if is_dark else 0.78
-            )
-
-            fg_val = force_hsl(0, 0.0, fg_color["l"], 0.0, 0.92 if is_dark else 0.12)
-            muted_val = force_hsl(
-                0, 0.0, muted_color["l"], 0.0, 0.35 if is_dark else 0.60
-            )
-
-            accent_color = force_hsl(0, 0.0, 0.0, 0.0, 0.95 if is_dark else 0.05)
-            accent_secondary_color = force_hsl(0, 0.0, 0.0, 0.0, 0.50)
-
-            # Map terminal colors to grayscale
-            lightness_targets = {
-                "red": 0.65 if is_dark else 0.20,
-                "yellow": 0.80 if is_dark else 0.40,
-                "green": 0.70 if is_dark else 0.15,
-                "cyan": 0.75 if is_dark else 0.35,
-                "blue": 0.60 if is_dark else 0.10,
-                "purple": 0.85 if is_dark else 0.30,
-                "orange": 0.78 if is_dark else 0.25,
-                "pink": 0.83 if is_dark else 0.45,
-            }
-            for name, target_l in lightness_targets.items():
-                generated[name] = force_hsl(0, 0.0, 0.0, 0.0, target_l)
-        else:
-            # Color monochromatic theme (all backgrounds, accents, and terminal slots use primary_accent)
-            bg_s = max(0.10, min(0.20, primary_accent["s"] * 0.5))
-            bg_val = force_hsl(
-                primary_accent["h"],
-                bg_s,
-                bg_color["l"],
-                bg_s,
-                0.04 if is_dark else 0.92,
-            )
-            bg_sec_val = force_hsl(
-                primary_accent["h"],
-                bg_s * 1.2,
-                bg_color["l"],
-                bg_s * 1.2,
-                0.08 if is_dark else 0.85,
-            )
-            bg_ter_val = force_hsl(
-                primary_accent["h"],
-                bg_s * 1.4,
-                bg_color["l"],
-                bg_s * 1.4,
-                0.12 if is_dark else 0.78,
-            )
-
-            fg_val = force_hsl(
-                primary_accent["h"],
-                primary_accent["s"] * 0.2,
-                fg_color["l"],
-                0.0,
-                0.92 if is_dark else 0.12,
-            )
-            muted_val = force_hsl(
-                primary_accent["h"],
-                primary_accent["s"] * 0.3,
-                muted_color["l"],
-                0.0,
-                0.35 if is_dark else 0.60,
-            )
-
-            accent_color = force_hsl(
-                primary_accent["h"],
-                primary_accent["s"],
-                primary_accent["l"],
-                0.50,
-                0.60 if is_dark else 0.45,
-            )
-            accent_secondary_color = force_hsl(
-                primary_accent["h"],
-                primary_accent["s"] * 0.8,
-                primary_accent["l"],
-                0.40,
-                0.50 if is_dark else 0.55,
-            )
-
-            # Map all terminal colors to primary_accent's hue and saturation
-            lightness_targets = {
-                "red": 0.65 if is_dark else 0.20,
-                "yellow": 0.80 if is_dark else 0.40,
-                "green": 0.70 if is_dark else 0.15,
-                "cyan": 0.75 if is_dark else 0.35,
-                "blue": 0.60 if is_dark else 0.10,
-                "purple": 0.85 if is_dark else 0.30,
-                "orange": 0.78 if is_dark else 0.25,
-                "pink": 0.83 if is_dark else 0.45,
-            }
-            for name, target_l in lightness_targets.items():
-                generated[name] = force_hsl(
-                    primary_accent["h"], primary_accent["s"], 0.0, 0.40, target_l
-                )
-
-        generated.update(
-            {"bg": bg_val, "bgSecondary": bg_sec_val, "fg": fg_val, "muted": muted_val}
-        )
+    colorful_top = [c for c in top_colors if get_chroma(c) >= 0.08]
+    if colorful_top:
+        primary_accent = max(colorful_top, key=get_chroma)
     else:
-        # Colorful wallpaper theme: full hue mapping
-        bg_s = max(0.10, min(0.20, dominant_sat * 0.5))
-        bg_val = force_hsl(
-            dominant_hue, bg_s, bg_color["l"], bg_s, 0.04 if is_dark else 0.92
-        )
-        bg_ter_val = force_hsl(
-            dominant_hue,
-            bg_s * 1.4,
-            bg_color["l"],
-            bg_s * 1.4,
-            0.12 if is_dark else 0.78,
-        )
+        primary_accent = top_colors[0]
 
-        other_candidates = []
-        for c in accent_candidates:
-            if get_chroma(c) >= 0.08 and hue_distance(c["h"], dominant_hue) > 45:
-                if total_colorful_pixels > 0 and (
-                    c["pixels"] >= 0.10 * total_colorful_pixels
-                ):
-                    other_candidates.append(c)
+    is_grayscale_theme = get_chroma(primary_accent) < 0.08
 
-        if other_candidates:
-            chosen_other = max(other_candidates, key=lambda c: c["pixels"])
-            bg_sec_s = max(0.08, min(0.18, chosen_other["s"] * 0.4))
-            bg_sec_val = force_hsl(
-                chosen_other["h"],
-                bg_sec_s,
-                bg_color["l"],
-                bg_sec_s,
-                0.08 if is_dark else 0.85,
-            )
-        else:
-            bg_sec_val = force_hsl(
-                dominant_hue,
-                bg_s * 1.2,
-                bg_color["l"],
-                bg_s * 1.2,
-                0.08 if is_dark else 0.85,
-            )
-
-        fg_val = force_hsl(
-            fg_color["h"], fg_color["s"], fg_color["l"], 0.0, 0.92 if is_dark else 0.12
-        )
-        muted_val = force_hsl(
-            muted_color["h"],
-            muted_color["s"],
-            muted_color["l"],
-            0.0,
-            0.35 if is_dark else 0.60,
-        )
-
-        accent1_cand = max(accent_candidates, key=get_chroma)
-        different_hue_candidates = [
-            c for c in accent_candidates if hue_distance(c["h"], accent1_cand["h"]) > 45
-        ]
-        if different_hue_candidates:
-            accent2_cand = max(different_hue_candidates, key=get_chroma)
-        else:
-            remaining = [c for c in accent_candidates if c != accent1_cand]
-            accent2_cand = max(remaining, key=get_chroma) if remaining else accent1_cand
-
+    if is_grayscale_theme:
+        accent_color = force_hsl(0, 0.0, 0.0, 0.0, 0.95 if is_dark else 0.05)
+    else:
         accent_color = force_hsl(
-            accent1_cand["h"],
-            accent1_cand["s"],
-            accent1_cand["l"],
-            0.50,
-            0.60 if is_dark else 0.45,
-        )
-        accent_secondary_color = force_hsl(
-            accent2_cand["h"],
-            accent2_cand["s"],
-            accent2_cand["l"],
+            primary_accent["h"],
+            primary_accent["s"],
+            primary_accent["l"],
             0.50,
             0.60 if is_dark else 0.45,
         )
 
-        generated.update(
-            {"bg": bg_val, "bgSecondary": bg_sec_val, "fg": fg_val, "muted": muted_val}
-        )
+    # Text colors slightly tinted with the wallpaper hue for better integration
+    fg_val = force_hsl(dominant_hue, bg_s, 0.5, bg_s * 0.3, 0.92 if is_dark else 0.12)
 
-        # Map terminal colors to closest actual hues in the wallpaper
-        target_hues = {
-            "red": 0,
-            "yellow": 60,
-            "green": 120,
-            "cyan": 180,
-            "blue": 240,
-            "purple": 300,
-        }
-        search_candidates = (
-            colorful_candidates if colorful_candidates else accent_candidates
-        )
-        for name, target_h in target_hues.items():
-            best_c = min(
-                search_candidates, key=lambda c: hue_distance(c["h"], target_h)
-            )
-            dist = hue_distance(best_c["h"], target_h)
-            is_neutral = get_chroma(best_c) < 0.08
-            if is_neutral or dist > 60:
-                generated[name] = force_hsl(
-                    target_h, 0.10, best_c["l"], 0.08, 0.62 if is_dark else 0.46
-                )
-            else:
-                generated[name] = force_hsl(
-                    best_c["h"],
-                    best_c["s"],
-                    best_c["l"],
-                    0.50,
-                    0.62 if is_dark else 0.46,
-                )
+    muted_val = force_hsl(
+        dominant_hue, bg_s, 0.5, bg_s * 0.5, 0.65 if is_dark else 0.45
+    )
 
-        for name, target_h in [("orange", 30), ("pink", 330)]:
-            best_c = min(
-                search_candidates, key=lambda c: hue_distance(c["h"], target_h)
-            )
-            dist = hue_distance(best_c["h"], target_h)
-            is_neutral = get_chroma(best_c) < 0.08
-            if is_neutral or dist > 60:
-                generated[name] = force_hsl(
-                    target_h, 0.10, best_c["l"], 0.08, 0.62 if is_dark else 0.46
-                )
-            else:
-                generated[name] = force_hsl(
-                    best_c["h"],
-                    best_c["s"],
-                    best_c["l"],
-                    0.50,
-                    0.62 if is_dark else 0.46,
-                )
+    # Border color matching the background hue but lighter/darker
+    border_val = force_hsl(
+        dominant_hue, bg_s, 0.5, bg_s * 0.8, 0.14 if is_dark else 0.82
+    )
+
+    h_acc, s_acc, l_acc = rgb_to_hsl(
+        int(accent_color[1:3], 16),
+        int(accent_color[3:5], 16),
+        int(accent_color[5:7], 16),
+    )
+    # Using a 45 degree hue shift for gradients as true complementary (+180) creates muddy middle colors
+    accent_complementary = force_hsl((h_acc + 45) % 360, s_acc, l_acc, s_acc, l_acc)
+
+    shadow_val = force_hsl(dominant_hue, bg_s, bg_color["l"], bg_s, 0.02)
+
+    generated = {
+        "bg": bg_val,
+        "fg": fg_val,
+        "muted": muted_val,
+        "border": border_val,
+        "accent": accent_color,
+        "accentComplementary": accent_complementary,
+        "shadow": shadow_val,
+    }
 
     # Save to quickshell cache
     home = os.path.expanduser("~")
@@ -533,15 +354,18 @@ def main():
         json.dump(wallpaper_generated, f, indent=2)
 
     # Check if we should overwrite the active colorscheme.json
-    should_write_active = True
     active_file = os.path.join(cache_dir, "colorscheme.json")
-    if os.path.exists(active_file):
-        try:
-            with open(active_file, "r") as f:
-                curr_data = json.load(f)
-                should_write_active = curr_data.get("generateFromWallpaper", False)
-        except Exception:
-            pass
+    should_write_active = True
+    if len(sys.argv) >= 3:
+        should_write_active = sys.argv[2].lower() in ["true", "1", "yes"]
+    else:
+        if os.path.exists(active_file):
+            try:
+                with open(active_file, "r") as f:
+                    curr_data = json.load(f)
+                    should_write_active = curr_data.get("generateFromWallpaper", False)
+            except Exception:
+                pass
 
     if should_write_active:
         with open(active_file, "w") as f:
@@ -553,6 +377,9 @@ def main():
         print(
             f"Success: Generated {'dark' if is_dark else 'light'} wallpaper_colorscheme.json (active colorscheme preserved)"
         )
+
+    # Always emit colors to stdout so QML can apply them immediately without a second cat
+    print("COLORS:" + json.dumps(wallpaper_generated))
 
 
 if __name__ == "__main__":

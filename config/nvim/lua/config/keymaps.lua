@@ -2,12 +2,23 @@ local keymap = vim.keymap
 
 -- General Keymaps
 keymap.set("n", "<Esc>", "<cmd>noh<CR>", { desc = "Clear search highlights" })
+keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Scroll down half a page (centered)" })
+keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Scroll up half a page (centered)" })
 
 -- Window Navigation
 keymap.set("n", "<C-h>", "<C-w>h", { desc = "Go to left window" })
 keymap.set("n", "<C-j>", "<C-w>j", { desc = "Go to lower window" })
 keymap.set("n", "<C-k>", "<C-w>k", { desc = "Go to upper window" })
 keymap.set("n", "<C-l>", "<C-w>l", { desc = "Go to right window" })
+keymap.set("n", "<A-Left>", "<C-w>h", { desc = "Go to left window" })
+keymap.set("n", "<A-Down>", "<C-w>j", { desc = "Go to lower window" })
+keymap.set("n", "<A-Up>", "<C-w>k", { desc = "Go to upper window" })
+keymap.set("n", "<A-Right>", "<C-w>l", { desc = "Go to right window" })
+
+keymap.set("n", "<leader>sv", "<cmd>vsplit<CR>", { desc = "Split window vertically" })
+keymap.set("n", "<leader>sh", "<cmd>split<CR>", { desc = "Split window horizontally" })
+keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" })
+keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" })
 
 -- Resize Windows
 keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
@@ -16,8 +27,6 @@ keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease wi
 keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase window width" })
 
 -- Buffer Navigation
-keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Previous buffer" })
-keymap.set("n", "<S-l>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
 keymap.set("n", "<leader>x", "<cmd>Bdelete<cr>", { desc = "Close current buffer" })
 
 -- Save File
@@ -34,14 +43,31 @@ keymap.set("n", "<leader>so", "<cmd>Telescope spell_suggest<cr>", { desc = "Spel
 
 -- Spelling
 keymap.set("n", "<leader>sp", "<cmd>set spell!<CR>", { desc = "Toggle spell check" })
-keymap.set("n", "zg", function()
+local add_to_dict = function()
   local word = vim.fn.expand("<cword>"):lower()
   vim.cmd("spellgood " .. word)
   print("Agregado: " .. word)
-end, { desc = "Add word to dictionary (lowercase)" })
+end
+keymap.set("n", "zg", add_to_dict, { desc = "Add word to dictionary (lowercase)" })
 keymap.set("n", "zw", "zw", { desc = "Mark word as incorrect" })
 keymap.set("n", "zug", "zug", { desc = "Undo add word to dictionary" })
 keymap.set("n", "zuw", "zuw", { desc = "Undo mark word as incorrect" })
+
+-- UI Toggles
+keymap.set("n", "<leader>un", "<cmd>set nu!<CR>", { desc = "Toggle line numbers" })
+keymap.set("n", "<leader>ur", "<cmd>set rnu!<CR>", { desc = "Toggle relative line numbers" })
+local diagnostics_active = true
+local toggle_diagnostics = function()
+  diagnostics_active = not diagnostics_active
+  if diagnostics_active then
+    vim.diagnostic.show()
+    print("Diagnostics active")
+  else
+    vim.diagnostic.hide()
+    print("Diagnostics disabled")
+  end
+end
+keymap.set("n", "<leader>ud", toggle_diagnostics, { desc = "Toggle diagnostics" })
 
 -- Match
 keymap.set("n", "<leader>sm", "<cmd>MatchWord<cr>", { desc = "Search & Replace (word under cursor)" })
@@ -104,3 +130,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostics list", buffer = ev.buf })
   end,
 })
+
+-- QuickBuf
+keymap.set("n", "<Tab>", "<cmd>QuickBuf<CR>", { desc = "QuickBuf" })
+keymap.set("n", "<leader>qt", "<cmd>QuickBufPinToggle<CR>", { desc = "Pin toggle" })
+keymap.set("n", "<S-h>", "<cmd>QuickBufPrevPinned<CR>", { desc = "Prev pinned buffer" })
+keymap.set("n", "<S-l>", "<cmd>QuickBufNextPinned<CR>", { desc = "Next pinned buffer" })
