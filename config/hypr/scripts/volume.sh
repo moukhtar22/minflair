@@ -1,7 +1,5 @@
 #!/bin/bash
 
-ICON_DIR="/usr/share/icons/Tela-circle-dracula-dark/22/panel"
-
 if [ -f "/tmp/volume_notification_id" ]; then
   NOTIFY_ID=$(cat "/tmp/volume_notification_id")
 else
@@ -45,25 +43,21 @@ if [ "$1" = "mic-mute" ]; then
   MIC_INFO=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@)
   MIC_MUTED=$(echo "$MIC_INFO" | grep -q "MUTED" && echo "yes" || echo "no")
   if [ "$MIC_MUTED" = "yes" ]; then
-    notify-send -p -r "$MIC_NOTIFY_ID" -t 1500 -i "$ICON_DIR/microphone-sensitivity-muted.svg" "Microphone" "Muted" >"/tmp/mic_notification_id"
+    notify-send -p -r "$MIC_NOTIFY_ID" -t 1500 "Microphone" "Muted" >"/tmp/mic_notification_id"
   else
-    notify-send -p -r "$MIC_NOTIFY_ID" -t 1500 -i "$ICON_DIR/microphone-sensitivity-high.svg" "Microphone" "Unmuted" >"/tmp/mic_notification_id"
+    notify-send -p -r "$MIC_NOTIFY_ID" -t 1500 "Microphone" "Unmuted" >"/tmp/mic_notification_id"
   fi
   exit 0
 fi
 
 if [ "$MUTED" = "yes" ]; then
-  ICON="$ICON_DIR/audio-volume-muted.svg"
   TEXT="Muted"
 elif [ "$VOLUME" -le 30 ]; then
-  ICON="$ICON_DIR/audio-volume-low.svg"
   TEXT="${VOLUME}%"
 elif [ "$VOLUME" -le 70 ]; then
-  ICON="$ICON_DIR/audio-volume-medium.svg"
   TEXT="${VOLUME}%"
 else
-  ICON="$ICON_DIR/audio-volume-high.svg"
   TEXT="${VOLUME}%"
 fi
 
-notify-send -p -r "$NOTIFY_ID" -t 1500 -i "$ICON" -h int:value:"$VOLUME" "Volume" "$TEXT" >"/tmp/volume_notification_id"
+notify-send -p -r "$NOTIFY_ID" -t 1500 -h int:value:"$VOLUME" "Volume" "$TEXT" >"/tmp/volume_notification_id"

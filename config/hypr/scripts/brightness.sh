@@ -1,7 +1,5 @@
 #!/bin/bash
 
-ICON_DIR="/usr/share/icons/Tela-circle-dracula-dark/22/panel"
-
 if [ -f "/tmp/brightness_notification_id" ]; then
   NOTIFY_ID=$(cat "/tmp/brightness_notification_id")
 else
@@ -32,10 +30,4 @@ esac
 
 BRIGHTNESS=$(brightnessctl -m | awk -F, '{print $4}' | tr -d '%')
 
-if [ "$BRIGHTNESS" -le 30 ]; then
-  ICON="$ICON_DIR/brightness-low.svg"
-else
-  ICON="$ICON_DIR/brightness-high.svg"
-fi
-
-notify-send -p -r "$NOTIFY_ID" -t 1500 -i "$ICON" -h int:value:"$BRIGHTNESS" "Brightness" "${BRIGHTNESS}%" >"/tmp/brightness_notification_id"
+notify-send -p -r "$NOTIFY_ID" -t 1500 -h int:value:"$BRIGHTNESS" "Brightness" "${BRIGHTNESS}%" >"/tmp/brightness_notification_id"
