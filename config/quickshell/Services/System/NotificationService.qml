@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 import qs.Core
+import qs.Core.Services
 
 Item {
     id: root
@@ -13,104 +14,292 @@ Item {
     property int unreadCount: historyListModel.count
     property var notificationObjects: ({
     })
+    property var notificationGroups: ({
+    })
+    property var groupRepresentationIds: ({
+    })
 
-    function notify(summary, body, icon = "", appName = "System") {
+    function notify(summary, body, icon = "", appName = "System", urgency = NotificationUrgency.Normal) {
         let timestamp = new Date().getTime();
-        let data = {
-            "id": timestamp,
+        let nd = notificationDataComponent.createObject(root, {
+            "notificationId": timestamp.toString(),
             "summary": summary,
             "body": body,
             "appName": appName,
-            "icon": icon,
-            "image": "",
-            "progress": 1,
-            "timestamp": timestamp
-        };
-        historyListModel.insert(0, data);
+            "appIcon": icon,
+            "urgency": urgency,
+            "timestamp": timestamp,
+            "isDnd": root.dndEnabled
+        });
+        notificationObjects[timestamp] = nd;
+        historyListModel.insert(0, {
+            "id": timestamp,
+            "notifData": nd
+        });
         if (!dndEnabled)
-            activeListModel.insert(0, data);
+            activeListModel.insert(0, {
+            "id": timestamp,
+            "notifData": nd
+        });
 
     }
 
     function dismissNotification(id) {
-        let notification = notificationObjects[id];
-        if (notification)
-            notification.dismiss();
+        let nd = notificationObjects[id];
+        if (nd)
+            nd.close();
 
         removeNotification(id);
     }
 
+    function getGroupKey(notification) {
+        let appsToGroup = ["whatsapp", "telegram", "discord", "slack"];
+        let app = (notification.appName || "").toLowerCase();
+        for (let i = 0; i < appsToGroup.length; i++) {
+            if (app.includes(appsToGroup[i]))
+                return appsToGroup[i];
+
+        }
+        return "";
+    }
+
+    function copyObject(obj) {
+        let copy = {
+        };
+        for (let k in obj) {
+            copy[k] = obj[k];
+        }
+        return copy;
+    }
+
     function removeNotification(id) {
-        delete notificationObjects[id];
+        for (let groupKey in groupRepresentationIds) {
+            if (groupRepresentationIds[groupKey] == id) {
+                let groups = copyObject(notificationGroups);
+                groups[groupKey] = [];
+                notificationGroups = groups;
+                let reps = copyObject(groupRepresentationIds);
+                delete reps[groupKey];
+                groupRepresentationIds = reps;
+                break;
+            }
+        }
+        if (notificationObjects[id]) {
+            notificationObjects[id].destroy(1000);
+            delete notificationObjects[id];
+        }
         for (var i = 0; i < activeListModel.count; i++) {
-            if (activeListModel.get(i).id === id) {
+            if (activeListModel.get(i).id == id) {
                 activeListModel.remove(i);
+                break;
+            }
+        }
+        for (var j = 0; j < historyListModel.count; j++) {
+            if (historyListModel.get(j).id == id) {
+                historyListModel.remove(j);
                 break;
             }
         }
     }
 
     function clearHistory() {
+        notificationGroups = {
+        };
+        groupRepresentationIds = {
+        };
+        for (let id in notificationObjects) {
+            notificationObjects[id].destroy();
+        }
+        notificationObjects = {
+        };
         historyListModel.clear();
+        activeListModel.clear();
     }
 
     function removeHistoryItem(index) {
-        if (index >= 0 && index < historyListModel.count)
-            historyListModel.remove(index);
-
+        if (index >= 0 && index < historyListModel.count) {
+            let id = historyListModel.get(index).id;
+            removeNotification(id);
+        }
     }
 
-    function updateNotificationData(notification) {
-        let data = {
-            "id": notification.id,
-            "summary": notification.summary ? notification.summary : "",
-            "body": notification.body ? notification.body : "",
-            "appName": notification.appName ? notification.appName : "Unknown APP",
-            "icon": notification.appIcon ? notification.appIcon : "",
-            "image": notification.image ? notification.image : "",
-            "progress": 1,
-            "timestamp": new Date().getTime()
-        };
-        let historyUpdated = false;
-        for (let i = 0; i < historyListModel.count; i++) {
-            if (historyListModel.get(i).id === notification.id) {
-                historyListModel.set(i, data);
-                historyUpdated = true;
+    function handleNotificationUpdate(notification) {
+        let groupKey = getGroupKey(notification);
+        if (!groupKey) {
+            root.updateNotificationData(notification);
+            return ;
+        }
+        let groups = copyObject(notificationGroups);
+        if (!groups[groupKey])
+            groups[groupKey] = [];
+
+        let msgIndex = -1;
+        for (let i = 0; i < groups[groupKey].length; i++) {
+            if (groups[groupKey][i].id == notification.id) {
+                msgIndex = i;
                 break;
             }
         }
-        if (!historyUpdated)
-            historyListModel.insert(0, data);
+        let msgData = {
+            "id": notification.id,
+            "summary": notification.summary ? notification.summary : "",
+            "body": notification.body ? notification.body : "",
+            "timestamp": new Date().getTime()
+        };
+        if (msgIndex >= 0)
+            groups[groupKey][msgIndex] = msgData;
+        else
+            groups[groupKey].push(msgData);
+        notificationGroups = groups;
+        let reps = copyObject(groupRepresentationIds);
+        let repId = reps[groupKey];
+        if (!repId || repId == notification.id) {
+            reps[groupKey] = notification.id;
+            groupRepresentationIds = reps;
+            root.updateNotificationData(notification);
+        } else {
+            notification.dismiss();
+            let repData = notificationObjects[repId];
+            if (repData) {
+                let displayNames = {
+                    "whatsapp": "WhatsApp",
+                    "telegram": "Telegram",
+                    "discord": "Discord",
+                    "slack": "Slack"
+                };
+                let displayName = displayNames[groupKey] || repData.appName;
+                let combinedBody = groups[groupKey].map((m) => {
+                    return (m.summary ? m.summary + ": " : "") + m.body;
+                }).join("\n");
+                let combinedSummary = displayName + " (" + groups[groupKey].length + ")";
+                repData.summary = combinedSummary;
+                repData.body = combinedBody;
+                repData.appName = displayName;
+                repData.timestamp = new Date().getTime();
+                for (let i = 0; i < historyListModel.count; i++) {
+                    if (historyListModel.get(i).id == repId) {
+                        historyListModel.set(i, {
+                            "id": repId,
+                            "notifData": repData
+                        });
+                        break;
+                    }
+                }
+                if (!dndEnabled) {
+                    for (let i = 0; i < activeListModel.count; i++) {
+                        if (activeListModel.get(i).id == repId) {
+                            activeListModel.remove(i);
+                            break;
+                        }
+                    }
+                    repData.popup = true;
+                    repData.timer.restart();
+                    activeListModel.insert(0, {
+                        "id": repId,
+                        "notifData": repData
+                    });
+                }
+            }
+        }
+    }
 
-        if (!dndEnabled) {
+    function updateNotificationData(notification) {
+        let nd = notificationObjects[notification.id];
+        if (!nd) {
+            nd = notificationDataComponent.createObject(root, {
+                "notification": notification,
+                "isDnd": root.dndEnabled
+            });
+            notificationObjects[notification.id] = nd;
+        } else {
+            if (nd.notification !== notification) {
+                nd.notification = notification;
+                nd.summary = notification.summary;
+                nd.body = notification.body;
+                nd.appIcon = notification.appIcon;
+                nd.appName = notification.appName;
+                nd.image = notification.image;
+                nd.urgency = notification.urgency;
+            }
+            if ((!nd.isDnd || nd.urgency === 2) && !nd.closed) {
+                nd.popup = true;
+                nd.timer.restart();
+            }
+        }
+        let historyUpdated = false;
+        if (!nd.isTransient) {
+            for (let i = 0; i < historyListModel.count; i++) {
+                if (historyListModel.get(i).id == notification.id) {
+                    historyListModel.set(i, {
+                        "id": notification.id,
+                        "notifData": nd
+                    });
+                    historyUpdated = true;
+                    break;
+                }
+            }
+            if (!historyUpdated)
+                historyListModel.insert(0, {
+                "id": notification.id,
+                "notifData": nd
+            });
+
+        }
+        if ((!dndEnabled || nd.urgency === 2) && nd.popup) {
             let activeUpdated = false;
             for (let i = 0; i < activeListModel.count; i++) {
-                if (activeListModel.get(i).id === notification.id) {
-                    activeListModel.set(i, data);
+                if (activeListModel.get(i).id == notification.id) {
+                    activeListModel.set(i, {
+                        "id": notification.id,
+                        "notifData": nd
+                    });
                     activeUpdated = true;
                     break;
                 }
             }
             if (!activeUpdated)
-                activeListModel.insert(0, data);
+                activeListModel.insert(0, {
+                "id": notification.id,
+                "notifData": nd
+            });
 
         }
+        while (historyListModel.count > 50)removeHistoryItem(historyListModel.count - 1)
     }
 
     onDndEnabledChanged: {
-        let timestamp = new Date().getTime();
-        let data = {
-            "id": timestamp,
-            "summary": dndEnabled ? "Do Not Disturb Enabled" : "Do Not Disturb Disabled",
-            "body": dndEnabled ? "Notifications are now silenced." : "Notifications will now be shown.",
-            "appName": "System",
-            "icon": dndEnabled ? "notifications-disabled" : "notifications",
-            "image": "",
-            "progress": 1,
-            "timestamp": timestamp
-        };
-        historyListModel.insert(0, data);
-        activeListModel.insert(0, data);
+        for (let id in notificationObjects) {
+            notificationObjects[id].isDnd = root.dndEnabled;
+            if (root.dndEnabled && notificationObjects[id].urgency !== 2)
+                notificationObjects[id].popup = false;
+
+        }
+        if (root.dndEnabled) {
+            for (let i = activeListModel.count - 1; i >= 0; i--) {
+                if (activeListModel.get(i).notifData.urgency !== 2)
+                    activeListModel.remove(i);
+
+            }
+        }
+    }
+
+    Component {
+        id: notificationDataComponent
+
+        NotificationData {
+        }
+
+    }
+
+    Connections {
+        function onGameModeActiveChanged() {
+            if (HyprlandService.gameModeActive)
+                root.dndEnabled = true;
+            else
+                root.dndEnabled = false;
+        }
+
+        target: HyprlandService
     }
 
     ListModel {
@@ -128,18 +317,26 @@ Item {
         imageSupported: true
         actionsSupported: true
         onNotification: (notification) => {
-            notificationObjects[notification.id] = notification;
+            if (notification.tracked)
+                return ;
+
             notification.tracked = true;
             notification.closed.connect((reason) => {
-                root.removeNotification(notification.id);
+                let nd = root.notificationObjects[notification.id];
+                if (nd && nd.notification !== notification)
+                    return ;
+
+                if (nd)
+                    nd.popup = false;
+
             });
             notification.summaryChanged.connect(() => {
-                root.updateNotificationData(notification);
+                root.handleNotificationUpdate(notification);
             });
             notification.bodyChanged.connect(() => {
-                root.updateNotificationData(notification);
+                root.handleNotificationUpdate(notification);
             });
-            root.updateNotificationData(notification);
+            root.handleNotificationUpdate(notification);
         }
     }
 

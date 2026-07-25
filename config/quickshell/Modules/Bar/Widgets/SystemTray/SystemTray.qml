@@ -4,98 +4,47 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.SystemTray
 import qs.Core
+import qs.Core.Components
+import qs.Core.Windows
 
 TopPopup {
     id: root
 
     property var currentTrayItem: null
 
-    function openMenu(trayItem) {
-        if (!trayItem || !trayItem.menu)
-            return ;
-
-        if (currentTrayItem === trayItem && trayMenu.isOpen) {
-            trayMenu.isOpen = false;
-            currentTrayItem = null;
-        } else {
-            trayMenu.menuHandle = trayItem.menu;
-            trayMenu.isOpen = true;
-            currentTrayItem = trayItem;
-        }
-    }
-
-    implicitWidth: 180 + (root.contentPadding * 2)
+    contentWidth: Math.max(250, Math.min(trayMenu.implicitWidth, 450))
+    contentHeight: 300
     onIsOpenChanged: {
-        if (!isOpen) {
-            trayMenu.isOpen = false;
-            currentTrayItem = null;
-        }
-    }
-
-    GridLayout {
-        id: gridLayout
-
-        visible: trayRepeater.count > 0
-        Layout.alignment: Qt.AlignHCenter
-        columns: Math.max(1, Math.min(trayRepeater.count, 6))
-        columnSpacing: Constants.sizeLg
-        rowSpacing: Constants.sizeLg
-
-        Repeater {
-            id: trayRepeater
-
-            model: SystemTray.items
-
-            delegate: TrayItem {
-                trayItem: modelData
-                onClicked: (mouse) => {
-                    if (mouse.button === Qt.LeftButton) {
-                        root.isOpen = false;
-                    } else if (mouse.button === Qt.RightButton) {
-                        if (modelData.menu)
-                            root.openMenu(modelData);
-                        else if (modelData.secondaryActivate)
-                            modelData.secondaryActivate();
-                    }
-                }
-            }
-
-        }
-
-    }
-
-    RowLayout {
-        visible: trayRepeater.count === 0
-        Layout.alignment: Qt.AlignHCenter
-        Layout.preferredHeight: 32
-        spacing: Constants.sizeSm
-
-        ThemedText {
-            text: "󰜱"
-            font.pixelSize: Constants.sizeMd
-            color: Theme.muted
-            Layout.alignment: Qt.AlignVCenter
-        }
-
-        ThemedText {
-            text: "Empty"
-            font.pixelSize: Constants.sizeSm
-            color: Theme.muted
-            Layout.alignment: Qt.AlignVCenter
-        }
+        if (!isOpen)
+            trayMenu.resetToRoot();
 
     }
 
     TrayMenu {
         id: trayMenu
 
-        isOpen: false
-        onIsOpenChanged: {
-            if (!isOpen) {
-                trayMenu.menuHandle = null;
-                root.currentTrayItem = null;
-            }
+        width: parent.width
+        Layout.preferredHeight: 300
+        menuHandle: root.currentTrayItem ? root.currentTrayItem.menu : null
+        title: root.currentTrayItem ? root.currentTrayItem.title : "Menu"
+        onBackRequested: root.isOpen = false
+        onCloseRequested: root.isOpen = false
+    }
+
+    Behavior on contentHeight {
+        NumberAnimation {
+            duration: Constants.animNormal
+            easing.type: Easing.OutExpo
         }
+
+    }
+
+    Behavior on contentWidth {
+        NumberAnimation {
+            duration: Constants.animNormal
+            easing.type: Easing.OutExpo
+        }
+
     }
 
 }

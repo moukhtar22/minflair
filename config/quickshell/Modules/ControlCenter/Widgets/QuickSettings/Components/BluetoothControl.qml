@@ -5,15 +5,15 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Core
+import qs.Core.Components
 
-RowLayout {
+QuickSettingsTile {
     id: root
 
     property bool expanded: false
-    property bool isActive: false
     property var btList: []
 
-    function addOrUpdateDevice(mac, name) {
+    function addOrUpdateDevice(mac, name, connected) {
         let list = root.btList;
         let found = false;
         let cleanName = name ? name.trim() : "";
@@ -23,17 +23,26 @@ RowLayout {
         for (let i = 0; i < list.length; i++) {
             if (list[i].mac === mac) {
                 found = true;
+                let changed = false;
                 if (cleanName && cleanName !== mac && list[i].name !== cleanName) {
                     list[i].name = cleanName;
-                    root.btList = list.slice();
+                    changed = true;
                 }
+                if (connected !== undefined && list[i].connected !== connected) {
+                    list[i].connected = connected;
+                    changed = true;
+                }
+                if (changed)
+                    root.btList = list.slice();
+
                 break;
             }
         }
         if (!found) {
             list.push({
                 "name": cleanName,
-                "mac": mac
+                "mac": mac,
+                "connected": connected || false
             });
             root.btList = list.slice();
         }
@@ -53,8 +62,6 @@ RowLayout {
     function toggle() {
         btSetProc.command = ["bluetoothctl", "power", root.isActive ? "off" : "on"];
         btSetProc.running = true;
-        btNotifyProc.command = ["notify-send", "-a", "System", "-i", root.isActive ? "preferences-system-bluetooth-inactive" : "preferences-system-bluetooth-active", "Bluetooth", root.isActive ? "Disabled" : "Enabled", "-t", "1500"];
-        btNotifyProc.running = true;
         root.isActive = !root.isActive;
     }
 
@@ -71,6 +78,20 @@ RowLayout {
         btConnectProc.running = true;
     }
 
+    icon: root.isActive ? "bluetooth" : "bluetooth-off"
+    label: "Bluetooth"
+    subtitle: {
+        if (!isActive)
+            return "Off";
+
+        for (let i = 0; i < btList.length; i++) {
+            if (btList[i].connected)
+                return btList[i].name;
+
+        }
+        return "Disconnected";
+    }
+    onClicked: root.toggle()
     onExpandedChanged: {
         if (expanded && isActive) {
             root.btList = [];
@@ -95,10 +116,6 @@ RowLayout {
         if (!isActive)
             expanded = false;
 
-    }
-
-    Process {
-        id: btNotifyProc
     }
 
     Timer {
@@ -195,7 +212,7 @@ RowLayout {
 
                 let mac = match[1];
                 let name = match[2];
-                root.addOrUpdateDevice(mac, name);
+                root.addOrUpdateDevice(mac, name, true);
             }
         }
 
@@ -209,79 +226,6 @@ RowLayout {
                 btScanProc.running = true;
 
         }
-    }
-
-    Item {
-        Layout.preferredWidth: 88
-        Layout.fillWidth: true
-        Layout.preferredHeight: rowLayout.implicitHeight
-
-        Rectangle {
-            id: bgRect
-
-            anchors.fill: parent
-            radius: Constants.sizeLg
-            color: Theme.bgSecondary
-        }
-
-        RowLayout {
-            id: rowLayout
-
-            anchors.fill: parent
-            spacing: 0
-            layer.enabled: true
-
-            IconButton {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                icon: root.isActive ? "󰂯" : "󰂲"
-                iconSize: Constants.sizeXl
-                iconColor: root.isActive ? Theme.blue : Theme.muted
-                hoverColor: "transparent"
-                bgColor: "transparent"
-                onClicked: root.toggle()
-                useBorder: false
-            }
-
-            Rectangle {
-                width: 1
-                Layout.fillHeight: true
-                Layout.topMargin: Constants.sizeXs
-                Layout.bottomMargin: Constants.sizeXs
-                color: Theme.muted
-                opacity: 0.3
-                visible: root.isActive
-            }
-
-            IconButton {
-                icon: root.expanded ? "" : ""
-                iconSize: Constants.sizeMd
-                visible: root.isActive
-                hoverColor: "transparent"
-                bgColor: "transparent"
-                onClicked: {
-                    if (root.isActive)
-                        root.expanded = !root.expanded;
-
-                }
-                useBorder: false
-            }
-
-            layer.effect: Component {
-                OpacityMask {
-
-                    maskSource: Rectangle {
-                        width: bgRect.width
-                        height: bgRect.height
-                        radius: Constants.sizeLg
-                    }
-
-                }
-
-            }
-
-        }
-
     }
 
 }

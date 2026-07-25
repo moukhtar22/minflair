@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Io
 import qs.Core
+import qs.Core.Components
 
 Rectangle {
     id: root
@@ -15,12 +16,13 @@ Rectangle {
     signal connect(string mac)
 
     Layout.fillWidth: true
-    Layout.preferredHeight: expanded ? Math.max(btListCol.implicitHeight + 16, 80) : 0
+    Layout.preferredHeight: expanded ? Math.max(btListCol.implicitHeight, 80) : 0
     opacity: expanded ? 1 : 0
     visible: opacity > 0
     clip: true
-    radius: Constants.sizeXs
-    color: Theme.bgSecondary
+    radius: 0
+    color: "transparent"
+    border.width: 0
 
     Timer {
         id: scanTimeout
@@ -46,11 +48,12 @@ Rectangle {
             height: 20
             visible: !root.timedOut
 
-            ThemedText {
+            SvgIcon {
                 anchors.centerIn: parent
-                text: "󰑐"
-                color: Theme.muted
-                font.pixelSize: Constants.sizeMd
+                icon: "reload"
+                iconColor: Theme.muted
+                iconSize: Constants.sizeMd
+                flat: true
             }
 
             RotationAnimation on rotation {
@@ -78,10 +81,6 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: Constants.sizeSm
-        anchors.leftMargin: Constants.sizeSm
-        anchors.rightMargin: Constants.sizeSm
-        anchors.bottomMargin: Constants.sizeSm
         visible: root.btList.length > 0
 
         ThemedText {
@@ -89,13 +88,15 @@ Rectangle {
             font.pixelSize: Constants.sizeSm
             font.letterSpacing: 1
             color: Theme.muted
+            visible: false
         }
 
         ScrollView {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(btRepeaterCol.implicitHeight, 200)
+            contentHeight: btRepeaterCol.implicitHeight
             clip: true
-            ScrollBar.vertical.policy: ScrollBar.AsNeeded
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOff
 
             ColumnLayout {
                 id: btRepeaterCol
@@ -107,35 +108,63 @@ Rectangle {
                     model: root.btList
 
                     Item {
+                        id: btItem
+
                         Layout.fillWidth: true
-                        implicitHeight: 28
+                        implicitHeight: 36
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Constants.sizeLg
+                            color: hoverHandlerB.hovered ? Theme.bgSecondary : "transparent"
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Constants.animFast
+                                }
+
+                            }
+
+                        }
 
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: Constants.sizeSm
-                            anchors.rightMargin: Constants.sizeXs
-                            spacing: Constants.sizeXs
+                            anchors.rightMargin: Constants.sizeSm
+                            spacing: Constants.sizeSm
 
-                            ThemedText {
-                                text: "󰂱"
-                                font.pixelSize: Constants.sizeXs
-                                color: Theme.blue
-                                opacity: 0.5
-                                Layout.alignment: Qt.AlignVCenter
+                            SvgIcon {
+                                icon: modelData.connected ? "bluetooth" : "bluetooth-off"
+                                iconColor: modelData.connected ? Theme.accent : Theme.fg
+                                iconSize: Constants.sizeLg
+                                flat: true
+                                opacity: modelData.connected ? 1 : 0.7
                             }
 
                             ThemedText {
                                 text: modelData.name
+                                color: modelData.connected ? Theme.accent : Theme.fg
                                 font.pixelSize: Constants.sizeSm
-                                opacity: hoverHandlerB.hovered ? 1 : 0.65
+                                font.bold: modelData.connected
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
+                            }
 
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Constants.animNormal
-                                    }
+                            Rectangle {
+                                visible: modelData.connected
+                                radius: height / 2
+                                implicitWidth: statusText.implicitWidth + Constants.sizeXs
+                                implicitHeight: statusText.implicitHeight + 2
+                                color: Theme.bgSecondary
 
+                                ThemedText {
+                                    id: statusText
+
+                                    anchors.centerIn: parent
+                                    text: "Connected"
+                                    font.pixelSize: Constants.sizeXs - 1
+                                    font.bold: true
+                                    color: Theme.accent
                                 }
 
                             }
@@ -165,9 +194,8 @@ Rectangle {
 
         Behavior on y {
             NumberAnimation {
-                duration: Constants.animFast
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.expanded ? [0.05, 0.9, 0.1, 1] : [0.3, 0, 0.8, 0.15]
+                duration: Constants.animNormal
+                easing.type: Easing.OutCubic
             }
 
         }
@@ -176,18 +204,16 @@ Rectangle {
 
     Behavior on Layout.preferredHeight {
         NumberAnimation {
-            duration: Constants.animFast
-            easing.type: Easing.Bezier
-            easing.bezierCurve: root.expanded ? [0.05, 0.9, 0.1, 1] : [0.3, 0, 0.8, 0.15]
+            duration: Constants.animNormal
+            easing.type: Easing.OutCubic
         }
 
     }
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Constants.animFast
-            easing.type: Easing.Bezier
-            easing.bezierCurve: root.expanded ? [0.05, 0.9, 0.1, 1] : [0.3, 0, 0.8, 0.15]
+            duration: Constants.animNormal
+            easing.type: Easing.OutCubic
         }
 
     }
