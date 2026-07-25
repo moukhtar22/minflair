@@ -146,7 +146,7 @@ def get_updates() -> list[dict]:
     packages = []
     try:
         res = subprocess.run(["checkupdates"], capture_output=True, text=True)
-        if res.returncode in (0, 2) and res.stdout:
+        if res.stdout:
             for line in res.stdout.strip().split("\n"):
                 if not line:
                     continue
@@ -169,8 +169,10 @@ def get_updates() -> list[dict]:
         pass
 
     try:
-        res = subprocess.run(["yay", "-Qua"], capture_output=True, text=True)
-        if res.returncode in (0, 2) and res.stdout:
+        res = subprocess.run(
+            ["yay", "-Qua", "--color=never"], capture_output=True, text=True
+        )
+        if res.stdout:
             for line in res.stdout.strip().split("\n"):
                 if not line:
                     continue

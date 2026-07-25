@@ -10,10 +10,10 @@ shift
 CMD=("$@")
 
 case "$LABEL" in
-"shutdown") ICON_PATH="system-shutdown" ;;
-"reboot") ICON_PATH="system-reboot" ;;
-"suspend") ICON_PATH="system-suspend" ;;
-"logout") ICON_PATH="system-log-out" ;;
+"shutdown") ;;
+"reboot") ;;
+"suspend") ;;
+"logout") ;;
 esac
 
 PID_FILE="/tmp/quickshell_power_action.pid"
@@ -27,12 +27,12 @@ trap 'rm -f "$PID_FILE"; exit 0' TERM INT
 LOG="/tmp/quickshell_power.log"
 echo "$(date): Action triggered: ${LABEL}" >"$LOG"
 
-NOTIFY_ID=$(notify-send -p -i "$ICON_PATH" -t 11000 "Power Menu" "Confirming ${LABEL} in 10 seconds...")
+NOTIFY_ID=$(notify-send -p -t 11000 "Power Menu" "Confirming ${LABEL}...")
 
 if [ -z "$NOTIFY_ID" ]; then
 
   echo "$(date): Fallback triggered (no ID)" >>"$LOG"
-  notify-send -i "$ICON_PATH" -t 11000 "Power Menu" "Confirming ${LABEL} in 10 seconds..."
+  notify-send "Confirming ${LABEL}..."
   sleep 10
   "${CMD[@]}"
   exit 0
@@ -51,38 +51,24 @@ MONITOR_PID=$!
 
 trap 'kill $MONITOR_PID 2>/dev/null; rm -f "$PID_FILE"; exit 0' TERM INT EXIT
 
-SILENT=false
-for i in {9..1}; do
+for i in {10..1}; do
   if [ "$ACCEPT" = true ]; then
     echo "$(date): Accepted via signal" >>"$LOG"
     break
   fi
   if [ "$CLOSED" = true ]; then
-    echo "$(date): Closed by user, continuing silently" >>"$LOG"
-    SILENT=true
-  fi
-  sleep 1 &
-  wait $!
-  if [ "$ACCEPT" = true ]; then
-    echo "$(date): Accepted via signal after wait" >>"$LOG"
-    break
-  fi
-  if [ "$CLOSED" = true ]; then
-    echo "$(date): Closed by user after wait, continuing silently" >>"$LOG"
-    SILENT=true
+    echo "$(date): Closed by user, canceling action" >>"$LOG"
+    exit 0
   fi
 
-  if [ "$SILENT" = false ]; then
-    NEW_ID=$(notify-send -p -r $NOTIFY_ID -i "$ICON_PATH" -t 11000 "Power Menu" "Confirming ${LABEL} in ${i} seconds..." 2>/dev/null)
-    if [ -z "$NEW_ID" ] || [ "$NEW_ID" != "$NOTIFY_ID" ]; then
-      echo "$(date): Dismissed by user during update, continuing silently" >>"$LOG"
-      if [ -n "$NEW_ID" ]; then
-        gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.CloseNotification $NEW_ID >/dev/null 2>&1
-      fi
-      SILENT=true
-    fi
-  fi
+  sleep 1 &
+  wait $!
 done
+
+if [ "$CLOSED" = true ]; then
+  echo "$(date): Closed by user after loop, canceling action" >>"$LOG"
+  exit 0
+fi
 
 echo "$(date): Executing: ${CMD[*]}" >>"$LOG"
 

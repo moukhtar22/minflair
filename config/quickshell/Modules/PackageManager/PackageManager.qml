@@ -6,6 +6,9 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
+import qs.Core.Windows
 
 CenterWindow {
     id: root
@@ -18,6 +21,7 @@ CenterWindow {
     property var selectedPackages: ([])
     property var selectedPackageObjects: ({
     })
+    property string accumulatedSearchOutput: ""
 
     function doSearch(query) {
         if (root.actionMode === "install") {
@@ -25,22 +29,20 @@ CenterWindow {
                 root.allResults = [];
                 root.updateModel();
                 root.isSearching = false;
+                startSearchTimer.stop();
                 return ;
             }
-            root.isSearching = true;
             searchProc.running = false;
-            searchProc.command = ["python3", Quickshell.shellDir + "/Scripts/search_packages.py", query];
-            searchProc.running = true;
+            startSearchTimer.nextCommand = query;
+            startSearchTimer.restart();
         } else if (root.actionMode === "remove") {
-            root.isSearching = true;
             searchProc.running = false;
-            searchProc.command = ["python3", Quickshell.shellDir + "/Scripts/search_packages.py", "--list-installed"];
-            searchProc.running = true;
+            startSearchTimer.nextCommand = "--list-installed";
+            startSearchTimer.restart();
         } else if (root.actionMode === "update") {
-            root.isSearching = true;
             searchProc.running = false;
-            searchProc.command = ["python3", Quickshell.shellDir + "/Scripts/search_packages.py", "--list-updates"];
-            searchProc.running = true;
+            startSearchTimer.nextCommand = "--list-updates";
+            startSearchTimer.restart();
         }
     }
 
@@ -58,20 +60,19 @@ CenterWindow {
             });
         }
         let selectedNames = root.selectedPackages;
-        for (let i = 0; i < selectedNames.length; i++) {
-            let name = selectedNames[i];
-            let pkgObj = root.selectedPackageObjects[name];
-            if (pkgObj) {
-                pkgObj.selected = true;
-                resultsModel.append(pkgObj);
-            }
-        }
         for (let i = 0; i < data.length; i++) {
             let pkg = data[i];
-            if (selectedNames.indexOf(pkg.name) === -1) {
-                pkg.selected = false;
-                resultsModel.append(pkg);
-            }
+            let isSel = selectedNames.indexOf(pkg.name) !== -1;
+            let pkgObj = {
+                "name": pkg.name,
+                "version": pkg.version,
+                "repo": pkg.repo,
+                "source": pkg.source,
+                "description": pkg.description,
+                "installed": pkg.installed,
+                "selected": isSel
+            };
+            resultsModel.append(pkgObj);
         }
         if (pkgView) {
             let found = false;
@@ -93,15 +94,11 @@ CenterWindow {
     function toggleSelect(pkgName) {
         let arr = root.selectedPackages.slice();
         let idx = arr.indexOf(pkgName);
-        let objs = {
-        };
-        for (let i = 0; i < arr.length; i++) {
-            if (arr[i] !== pkgName)
-                objs[arr[i]] = root.selectedPackageObjects[arr[i]];
-
-        }
+        let objs = Object.assign({
+        }, root.selectedPackageObjects);
         if (idx !== -1) {
             arr.splice(idx, 1);
+            delete objs[pkgName];
         } else {
             arr.push(pkgName);
             let found = false;
@@ -138,7 +135,12 @@ CenterWindow {
         }
         root.selectedPackages = arr;
         root.selectedPackageObjects = objs;
-        root.updateModel();
+        for (let i = 0; i < resultsModel.count; i++) {
+            if (resultsModel.get(i).name === pkgName) {
+                resultsModel.setProperty(i, "selected", idx === -1);
+                break;
+            }
+        }
     }
 
     function executeBatch() {
@@ -153,8 +155,8 @@ CenterWindow {
         } else if (root.actionMode === "update") {
             installProc.running = false;
             installProc.command = ["kitty", "--class", "kitty-floating", "--hold", "-e", "yay", "-Syu"].concat(root.selectedPackages);
-            AppState.isSystemUpdating = true;
-            installProc.running = true;
+            UpdateService.isSystemUpdating = true;
+            installProc.startDetached();
         } else {
             installProc.running = false;
             installProc.command = ["kitty", "--class", "kitty-floating", "--hold", "-e", "yay", "-S"].concat(root.selectedPackages);
@@ -189,7 +191,9 @@ CenterWindow {
             }
         } else if (event.key === Qt.Key_Up) {
             if (pkgView.currentIndex <= -1 && !fromSearch) {
-                searchField.forceActiveFocus();
+                if (root.actionMode !== "update")
+                    searchField.forceActiveFocus();
+
                 pkgView.currentIndex = -1;
                 event.accepted = true;
             } else if (pkgView.currentIndex > 0) {
@@ -217,7 +221,10 @@ CenterWindow {
                 };
                 root.allResults = [];
                 resultsModel.clear();
-                root.doSearch(root.searchText);
+                searchField.text = "";
+                root.searchText = "";
+                root.doSearch("");
+                focusTimer.start();
             } else {
                 let idx = pkgView.currentIndex >= 0 ? pkgView.currentIndex : 0;
                 if (resultsModel.count > idx) {
@@ -229,44 +236,37 @@ CenterWindow {
         }
     }
 
-    footerLeftText: {
-        if (root.isSearching)
-            return "Searching...";
-
-        if (resultsModel.count > 0)
-            return resultsModel.count + (resultsModel.count === 1 ? " package found" : " packages found");
-
-        return "";
-    }
-    footerKeyHints: [{
-        "key": "↑↓",
-        "description": "Navigate"
-    }, {
-        "key": "󰌑",
-        "description": "Execute"
-    }, {
-        "key": "󰌒",
-        "description": "Select"
-    }, {
-        "key": "Ctrl + 󰌒",
-        "description": "Switch Mode"
-    }]
     popupId: "packagemanager"
     preferredHeight: 520
     preferredWidth: 650
     onPopupOpened: {
-        focusTimer.start();
         searchField.text = "";
         root.allResults = [];
         root.installingPkg = "";
-        root.actionMode = AppState.packageManagerMode;
+        root.actionMode = SettingsService.packageManagerMode;
         root.selectedPackages = [];
         root.selectedPackageObjects = {
         };
         root.doSearch("");
+        focusTimer.start();
     }
     onPopupClosed: {
-        AppState.packageManagerMode = "install";
+        SettingsService.packageManagerMode = "install";
+    }
+
+    Timer {
+        id: startSearchTimer
+
+        property string nextCommand: ""
+
+        interval: 10
+        repeat: false
+        onTriggered: {
+            root.isSearching = true;
+            root.accumulatedSearchOutput = "";
+            searchProc.command = ["python3", Quickshell.shellDir + "/Scripts/search_packages.py", nextCommand];
+            searchProc.running = true;
+        }
     }
 
     ListModel {
@@ -278,7 +278,12 @@ CenterWindow {
 
         interval: 50
         repeat: false
-        onTriggered: searchField.forceActiveFocus()
+        onTriggered: {
+            if (root.actionMode !== "update")
+                searchField.forceActiveFocus();
+            else if (pkgView.visible)
+                pkgView.forceActiveFocus();
+        }
     }
 
     Timer {
@@ -311,10 +316,13 @@ CenterWindow {
 
         command: ["echo", ""]
         onExited: function(exitCode) {
+            if (searchProc.running || startSearchTimer.running)
+                return ;
+
             root.isSearching = false;
             if (exitCode === 0) {
                 try {
-                    root.allResults = JSON.parse(searchOutput.text);
+                    root.allResults = JSON.parse(root.accumulatedSearchOutput);
                     if (root.actionMode === "update") {
                         let arr = [];
                         let objs = {
@@ -341,10 +349,14 @@ CenterWindow {
                     resultsModel.clear();
                 }
             }
+            root.accumulatedSearchOutput = "";
+            focusTimer.start();
         }
 
-        stdout: StdioCollector {
-            id: searchOutput
+        stdout: SplitParser {
+            onRead: (data) => {
+                root.accumulatedSearchOutput += data;
+            }
         }
 
     }
@@ -353,7 +365,7 @@ CenterWindow {
         id: installProc
 
         onExited: (code) => {
-            AppState.isSystemUpdating = false;
+            UpdateService.isSystemUpdating = false;
         }
     }
 
@@ -374,140 +386,118 @@ CenterWindow {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        Item {
+        ThemedTabs {
+            id: modeTabs
+
             Layout.fillWidth: true
             Layout.preferredHeight: 38
+            activeValue: root.actionMode
+            onTabSelected: (value) => {
+                if (root.actionMode === value)
+                    return ;
 
-            Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: 1
-                color: Theme.border
+                root.actionMode = value;
+                root.selectedPackages = [];
+                root.selectedPackageObjects = {
+                };
+                root.allResults = [];
+                resultsModel.clear();
+                searchField.text = "";
+                root.searchText = "";
+                root.doSearch("");
+                focusTimer.start();
             }
 
-            RowLayout {
-                anchors.fill: parent
-                spacing: 0
+            ThemedTab {
+                icon: "download"
+                text: "Install"
+                value: "install"
+            }
 
-                TabButton {
-                    tabIcon: "󱧕"
-                    tabText: "Install"
-                    modeName: "install"
-                    activeColor: Theme.green
-                }
+            ThemedTab {
+                icon: "trash"
+                text: "Remove"
+                value: "remove"
+            }
 
-                TabButton {
-                    tabIcon: "󱧖"
-                    tabText: "Remove"
-                    modeName: "remove"
-                    activeColor: Theme.red
-                }
-
-                TabButton {
-                    tabIcon: "󰏖"
-                    tabText: "Update"
-                    modeName: "update"
-                    activeColor: Theme.purple
-                }
-
+            ThemedTab {
+                icon: "update"
+                text: "Update"
+                value: "update"
             }
 
         }
 
-        Rectangle {
+        RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 40
-            color: Theme.bgSecondary
-            radius: Constants.sizeXl
-            border.color: searchField.activeFocus ? (root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.4) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.4) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.4)) : (root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.2) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.2) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.2))
-            border.width: 1
+            spacing: Constants.sizeSm
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Constants.sizeLg
-                anchors.rightMargin: Constants.sizeLg
-                spacing: Constants.sizeXs
+            ThemedSearchBar {
+                id: searchField
 
-                ThemedText {
-                    text: ""
-                    font.pixelSize: Constants.sizeLg
+                Layout.fillWidth: true
+                preferredHeight: 40
+                visible: root.actionMode !== "update"
+                placeholderText: root.actionMode === "remove" ? "Search to remove" : root.actionMode === "update" ? "Search updates" : "Search to install"
+                onSearchRequested: (text) => {
+                    root.searchText = text;
+                    debounceTimer.restart();
                 }
-
-                TextField {
-                    id: searchField
-
-                    Layout.fillWidth: true
-                    placeholderText: root.actionMode === "remove" ? "Search to remove" : root.actionMode === "update" ? "Search updates" : "Search to install"
-                    placeholderTextColor: Theme.muted
-                    color: Theme.fg
-                    font.pixelSize: Constants.sizeMd
-                    font.family: Constants.fontFamily
-                    background: null
-                    onTextChanged: {
-                        root.searchText = text;
-                        debounceTimer.restart();
-                    }
-                    Keys.onPressed: function(event) {
-                        root.handleKeyPress(event, true);
-                    }
+                textField.Keys.onPressed: function(event) {
+                    root.handleKeyPress(event, true);
                 }
+            }
 
-                ThemedText {
-                    visible: root.selectedPackages.length > 0
-                    text: root.selectedPackages.length + (root.selectedPackages.length === 1 ? " selected" : " selected")
-                    font.pixelSize: Constants.sizeSm
-                    font.bold: true
-                    color: root.actionMode === "install" ? Theme.green : root.actionMode === "update" ? Theme.purple : Theme.red
-                    opacity: 0.8
+            Item {
+                Layout.fillWidth: true
+                visible: root.actionMode === "update"
+            }
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Constants.animNormal
-                            easing.type: Easing.OutQuint
-                        }
+            ThemedText {
+                Layout.alignment: Qt.AlignVCenter
+                visible: root.selectedPackages.length > 0
+                text: root.selectedPackages.length + (root.selectedPackages.length === 1 ? " selected" : " selected")
+                font.pixelSize: Constants.sizeSm
+                font.bold: true
+                color: Theme.fg
 
-                    }
-
-                }
-
-                Rectangle {
-                    visible: root.selectedPackages.length > 0
-                    width: execLabel.implicitWidth + 24
-                    height: 24
-                    radius: 12
-                    color: root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, execHover.hovered ? 0.3 : 0.15) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, execHover.hovered ? 0.3 : 0.15) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, execHover.hovered ? 0.3 : 0.15)
-                    border.color: root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.4) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.4) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.4)
-                    border.width: 1
-
-                    ThemedText {
-                        id: execLabel
-
-                        anchors.centerIn: parent
-                        text: root.actionMode === "install" ? "Install" : root.actionMode === "update" ? "Update" : "Remove"
-                        font.pixelSize: 10
-                        font.bold: true
-                        color: root.actionMode === "install" ? Theme.green : root.actionMode === "update" ? Theme.purple : Theme.red
-                    }
-
-                    HoverHandler {
-                        id: execHover
-
-                        cursorShape: Qt.PointingHandCursor
-                    }
-
-                    TapHandler {
-                        onTapped: root.executeBatch()
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Constants.animNormal
+                        easing.type: Easing.OutQuint
                     }
 
                 }
 
             }
 
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: Constants.animNormal
-                    easing.type: Easing.OutQuint
+            Rectangle {
+                Layout.alignment: Qt.AlignVCenter
+                visible: root.selectedPackages.length > 0
+                width: execLabel.implicitWidth + Constants.size2Xl
+                height: Constants.size2Xl
+                radius: height / 2
+                color: Theme.bgSecondary
+
+                ThemedText {
+                    id: execLabel
+
+                    anchors.centerIn: parent
+                    text: root.actionMode === "install" ? "Install" : root.actionMode === "update" ? "Update" : "Remove"
+                    font.pixelSize: Constants.sizeXs + 2
+                    font.bold: true
+                    color: Theme.accent
+                }
+
+                HoverHandler {
+                    id: execHover
+
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: root.executeBatch()
                 }
 
             }
@@ -521,12 +511,11 @@ CenterWindow {
             ColumnLayout {
                 anchors.centerIn: parent
                 visible: root.actionMode === "install" && root.searchText.length < 2 && resultsModel.count === 0 && !root.isSearching
-                opacity: visible ? 1 : 0
 
-                ThemedText {
-                    text: "󰏖"
-                    color: Theme.muted
-                    font.pixelSize: 72
+                SvgIcon {
+                    icon: "download"
+                    iconColor: Theme.muted
+                    iconSize: 72
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -542,27 +531,18 @@ CenterWindow {
                     color: Theme.muted
                     font.pixelSize: Constants.sizeSm
                     Layout.alignment: Qt.AlignHCenter
-                    opacity: 0.6
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                    }
-
                 }
 
             }
 
             ColumnLayout {
                 anchors.centerIn: parent
-                visible: resultsModel.count === 0 && !root.isSearching && !(root.actionMode === "install" && root.searchText.length < 2)
-                opacity: visible ? 1 : 0
+                visible: resultsModel.count === 0 && !root.isSearching && !debounceTimer.running && !(root.actionMode === "install" && root.searchText.length < 2)
 
-                ThemedText {
-                    text: root.actionMode === "update" ? "󰄬" : "󰩉"
-                    color: root.actionMode === "update" ? Theme.green : Theme.muted
-                    font.pixelSize: 72
+                SvgIcon {
+                    icon: root.actionMode === "update" ? "check" : "ghost"
+                    iconColor: root.actionMode === "update" ? Theme.accent : Theme.muted
+                    iconSize: 72
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -573,24 +553,17 @@ CenterWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                    }
-
-                }
-
             }
 
             ColumnLayout {
                 anchors.centerIn: parent
                 visible: root.isSearching
-                opacity: visible ? 1 : 0
 
-                ThemedText {
-                    text: "󰑐"
-                    color: Theme.purple
-                    font.pixelSize: 36
+                SvgIcon {
+                    icon: "reload"
+                    iconColor: Theme.accent
+                    iconSize: 36
+                    flat: true
                     Layout.alignment: Qt.AlignHCenter
 
                     RotationAnimation on rotation {
@@ -608,13 +581,6 @@ CenterWindow {
                     color: Theme.muted
                     font.pixelSize: Constants.sizeMd
                     Layout.alignment: Qt.AlignHCenter
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                    }
-
                 }
 
             }
@@ -642,9 +608,8 @@ CenterWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Constants.sizeXs
-                        color: root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.08) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.08) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.08)
-                        border.color: root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.2) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.2) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.2)
+                        radius: Constants.sizeLg
+                        color: Theme.bgSecondary
                         border.width: 1
 
                         Rectangle {
@@ -655,8 +620,8 @@ CenterWindow {
                             anchors.topMargin: 8
                             anchors.bottomMargin: 8
                             width: 3
-                            radius: 2
-                            color: root.actionMode === "install" ? Theme.green : root.actionMode === "update" ? Theme.purple : Theme.red
+                            radius: width / 2
+                            color: Theme.accent
 
                             Behavior on color {
                                 ColorAnimation {
@@ -756,32 +721,16 @@ CenterWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Constants.sizeXs
-                        color: root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.06) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.06) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.06)
-                        opacity: isSelected ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Constants.animFast
-                            }
-
-                        }
-
+                        radius: Constants.sizeLg
+                        color: Theme.bgSecondary
+                        visible: isSelected
                     }
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Constants.sizeXs
+                        radius: Constants.sizeLg
                         color: Theme.bgSecondary
-                        opacity: delegateHover.hovered && !isCurrent ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Constants.animNormal
-                            }
-
-                        }
-
+                        visible: delegateHover.hovered && !isCurrent
                     }
 
                     RowLayout {
@@ -792,46 +741,18 @@ CenterWindow {
                         anchors.rightMargin: Constants.sizeLg
                         spacing: Constants.sizeSm
 
-                        Rectangle {
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
+                        SvgIconButton {
+                            id: checkIcon
+
                             Layout.alignment: Qt.AlignVCenter
-                            radius: 4
-                            color: isSelected ? (root.actionMode === "install" ? Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.15) : root.actionMode === "update" ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.15) : Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.15)) : "transparent"
-                            border.color: isSelected ? (root.actionMode === "install" ? Theme.green : root.actionMode === "update" ? Theme.purple : Theme.red) : Theme.muted
-                            border.width: 1
-                            opacity: isSelected ? 1 : (isCurrent ? 0.6 : 0.3)
-
-                            ThemedText {
-                                anchors.centerIn: parent
-                                text: "󰄬"
-                                font.pixelSize: 14
-                                font.bold: true
-                                color: root.actionMode === "install" ? Theme.green : root.actionMode === "update" ? Theme.purple : Theme.red
-                                visible: isSelected
+                            icon: isSelected ? "circle-check" : "circle-dashed-check"
+                            iconSize: Constants.sizeLg
+                            iconColor: isSelected ? Theme.accent : Theme.muted
+                            flat: true
+                            padding: 0
+                            onClicked: {
+                                root.toggleSelect(name);
                             }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Constants.animFast
-                                }
-
-                            }
-
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: Constants.animFast
-                                }
-
-                            }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Constants.animFast
-                                }
-
-                            }
-
                         }
 
                         ColumnLayout {
@@ -845,7 +766,7 @@ CenterWindow {
 
                                 ThemedText {
                                     text: name
-                                    color: isSelected ? (root.actionMode === "install" ? Theme.green : root.actionMode === "update" ? Theme.purple : Theme.red) : (isCurrent ? Theme.purple : Theme.fg)
+                                    color: isSelected ? Theme.accent : (isCurrent ? Theme.accent : Theme.fg)
                                     font.pixelSize: Constants.sizeMd
                                     font.bold: true
 
@@ -862,8 +783,7 @@ CenterWindow {
                                 ThemedText {
                                     text: version
                                     color: Theme.muted
-                                    font.pixelSize: 10
-                                    opacity: 0.6
+                                    font.pixelSize: Constants.sizeXs + 2
                                     Layout.alignment: Qt.AlignBottom
                                     Layout.bottomMargin: 2
                                 }
@@ -878,7 +798,6 @@ CenterWindow {
                                 maximumLineCount: isCurrent ? 3 : 1
                                 elide: Text.ElideRight
                                 wrapMode: isCurrent ? Text.WordWrap : Text.NoWrap
-                                opacity: isCurrent ? 0.9 : 0.7
 
                                 Behavior on color {
                                     ColorAnimation {
@@ -905,19 +824,17 @@ CenterWindow {
                                     visible: installed
                                     width: instText.implicitWidth + 12
                                     height: 18
-                                    radius: 4
-                                    color: Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.1)
-                                    border.color: Qt.rgba(Theme.green.r, Theme.green.g, Theme.green.b, 0.2)
-                                    border.width: 1
+                                    radius: height / 2
+                                    color: Theme.bgSecondary
 
                                     ThemedText {
                                         id: instText
 
                                         anchors.centerIn: parent
                                         text: "INSTALLED"
-                                        font.pixelSize: 8
+                                        font.pixelSize: Constants.sizeXs
                                         font.bold: true
-                                        color: Theme.green
+                                        color: Theme.accent
                                     }
 
                                 }
@@ -925,19 +842,17 @@ CenterWindow {
                                 Rectangle {
                                     width: repoText.implicitWidth + 12
                                     height: 18
-                                    radius: 4
-                                    color: source === "AUR" ? Qt.rgba(Theme.cyan.r, Theme.cyan.g, Theme.cyan.b, 0.1) : Qt.rgba(Theme.blue.r, Theme.blue.g, Theme.blue.b, 0.1)
-                                    border.color: source === "AUR" ? Qt.rgba(Theme.cyan.r, Theme.cyan.g, Theme.cyan.b, 0.2) : Qt.rgba(Theme.blue.r, Theme.blue.g, Theme.blue.b, 0.2)
-                                    border.width: 1
+                                    radius: height / 2
+                                    color: Theme.bgSecondary
 
                                     ThemedText {
                                         id: repoText
 
                                         anchors.centerIn: parent
                                         text: (source === "AUR" ? "AUR" : repo).toUpperCase()
-                                        font.pixelSize: 8
+                                        font.pixelSize: Constants.sizeXs
                                         font.bold: true
-                                        color: source === "AUR" ? Theme.cyan : Theme.blue
+                                        color: Theme.accent
                                         textFormat: Text.PlainText
                                     }
 
@@ -970,102 +885,12 @@ CenterWindow {
                 }
 
                 ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
+                    policy: ScrollBar.AlwaysOff
                     active: true
                 }
 
             }
 
-        }
-
-    }
-
-    component TabButton: Item {
-        id: tabBtn
-
-        property string tabIcon: ""
-        property string tabText: ""
-        property string modeName: ""
-        property color activeColor: Theme.purple
-        readonly property bool isActive: root.actionMode === modeName
-
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-
-        RowLayout {
-            anchors.centerIn: parent
-            spacing: Constants.sizeSm
-
-            ThemedText {
-                text: tabBtn.tabIcon
-                font.pixelSize: Constants.sizeMd + 2
-                color: tabBtn.isActive ? tabBtn.activeColor : (hoverHandler.hovered ? Theme.fg : Theme.muted)
-                Layout.alignment: Qt.AlignVCenter
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Constants.animFast
-                    }
-
-                }
-
-            }
-
-            ThemedText {
-                text: tabBtn.tabText
-                font.pixelSize: Constants.sizeSm
-                font.weight: tabBtn.isActive ? Font.Bold : Font.Normal
-                color: tabBtn.isActive ? tabBtn.activeColor : (hoverHandler.hovered ? Theme.fg : Theme.muted)
-                Layout.alignment: Qt.AlignVCenter
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Constants.animFast
-                    }
-
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: tabBtn.isActive ? 100 : 0
-            height: 3
-            radius: 1.5
-            color: tabBtn.activeColor
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: Constants.animFast
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-        }
-
-        HoverHandler {
-            id: hoverHandler
-
-            cursorShape: Qt.PointingHandCursor
-        }
-
-        TapHandler {
-            onTapped: {
-                if (root.actionMode === tabBtn.modeName)
-                    return ;
-
-                root.actionMode = tabBtn.modeName;
-                root.selectedPackages = [];
-                root.selectedPackageObjects = {
-                };
-                root.allResults = [];
-                resultsModel.clear();
-                root.doSearch(root.searchText);
-            }
         }
 
     }

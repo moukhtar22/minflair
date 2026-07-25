@@ -5,6 +5,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
 
 PanelWindow {
     id: root
@@ -12,17 +14,18 @@ PanelWindow {
     property string popupId: ""
     property bool isOpen: false
     default property alias content: innerLayout.data
-    property int animationDuration: 450
-    property int fadeDuration: Constants.animNormal
+    property int animationDuration: HyprlandService.enableAnimations ? Constants.animExpressive : 0
+    property int fadeDuration: HyprlandService.enableAnimations ? Constants.animNormal : 0
+    readonly property var easeCurve: [0.25, 0.1, 0.25, 1, 1, 1]
+    readonly property var overshotCurve: [0.13, 0.99, 0.29, 1.05, 1, 1]
     property color backgroundColor: Theme.bg
     property int preferredWidth: 600
     property int preferredHeight: 500
     property bool _windowVisible: false
-    property string footerLeftText: ""
-    property var footerKeyHints: []
 
     signal popupOpened()
     signal popupClosed()
+    signal fullyClosed()
 
     surfaceFormat.opaque: false
     onIsOpenChanged: {
@@ -48,33 +51,6 @@ PanelWindow {
     focusable: true
     exclusionMode: ExclusionMode.Ignore
     visible: _windowVisible
-    Component.onCompleted: {
-        if (root.popupId !== "")
-            socketCleanup.running = true;
-
-    }
-
-    Connections {
-        function onActivePopupChanged() {
-            if (popupId !== "" && AppState.activePopup !== popupId)
-                root.isOpen = false;
-
-        }
-
-        function onTogglePopup(id) {
-            if (popupId !== "" && id === popupId)
-                root.isOpen = !root.isOpen;
-
-        }
-
-        function onOpenPopup(id) {
-            if (popupId !== "" && id === popupId)
-                root.isOpen = true;
-
-        }
-
-        target: AppState
-    }
 
     anchors {
         top: true
@@ -93,7 +69,10 @@ PanelWindow {
 
         interval: root.animationDuration
         repeat: false
-        onTriggered: root._windowVisible = false
+        onTriggered: {
+            root._windowVisible = false;
+            root.fullyClosed();
+        }
     }
 
     Item {
@@ -110,9 +89,9 @@ PanelWindow {
             focus: root.isOpen
             Keys.onEscapePressed: root.isOpen = false
             layer.enabled: true
-            y: root.height > 0 ? (root.isOpen ? (root.height - root.preferredHeight) / 2 : root.height + root.preferredHeight) : 3000
+            y: root.height > 0 ? (root.isOpen ? (root.height - root.preferredHeight) / 2 : root.height + Constants.size5Xl) : 3000
             opacity: root.isOpen ? 1 : 0
-            scale: root.isOpen ? 1 : 0.95
+            scale: 1
 
             MouseArea {
                 anchors.fill: parent
@@ -121,8 +100,8 @@ PanelWindow {
             Rectangle {
                 anchors.fill: parent
                 color: root.backgroundColor
-                radius: Constants.sizeLg
-                border.width: 1
+                radius: Constants.sizeLg * 2
+                border.width: 2
                 border.color: Theme.border
                 clip: true
             }
@@ -140,12 +119,6 @@ PanelWindow {
                     spacing: Constants.sizeLg
                 }
 
-                WidgetFooter {
-                    Layout.fillWidth: true
-                    leftText: root.footerLeftText
-                    keyHints: root.footerKeyHints
-                }
-
             }
 
             Behavior on y {
@@ -153,62 +126,25 @@ PanelWindow {
 
                 NumberAnimation {
                     duration: root.animationDuration
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: root.isOpen ? [0.13, 0.99, 0.29, 1.05, 1, 1] : [0.25, 0.1, 0.25, 1, 1, 1]
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: root.isOpen ? root.overshotCurve : root.easeCurve
                 }
 
             }
 
             Behavior on opacity {
+                enabled: HyprlandService.enableAnimations
+
                 NumberAnimation {
                     duration: root.fadeDuration
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: [0.25, 0.1, 0.25, 1, 1, 1]
-                }
-
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: root.animationDuration
-                    easing.type: root.isOpen ? Easing.OutBack : Easing.InCubic
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: root.easeCurve
                 }
 
             }
 
         }
 
-    }
-
-    SocketServer {
-        id: server
-
-        path: "/tmp/quickshell_" + root.popupId
-        active: false
-
-        handler: Component {
-            Socket {
-                onConnectedChanged: {
-                    if (connected) {
-                        root.isOpen = !root.isOpen;
-                        connected = false;
-                    }
-                }
-            }
-
-        }
-
-    }
-
-    Process {
-        id: socketCleanup
-
-        command: ["rm", "-f", "/tmp/quickshell_" + root.popupId]
-        onExited: function(exitCode) {
-            if (root.popupId !== "")
-                server.active = true;
-
-        }
     }
 
 }

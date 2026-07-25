@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Core
+import qs.Core.Components
+import qs.Core.Windows
 
 CenterWindow {
     id: root
@@ -107,13 +109,6 @@ CenterWindow {
         return processed;
     }
 
-    footerKeyHints: [{
-        "key": "󰌒",
-        "description": "Switch Category"
-    }, {
-        "key": "Ctrl + 󰌒",
-        "description": "Switch Environment"
-    }]
     popupId: "keybinds"
     preferredWidth: 850
     preferredHeight: 550
@@ -200,7 +195,7 @@ CenterWindow {
                 ThemedText {
                     text: "Environment"
                     color: Theme.muted
-                    font.pixelSize: 10
+                    font.pixelSize: Constants.sizeXs + 2
                     font.bold: true
                     Layout.leftMargin: Constants.sizeXs
                     Layout.topMargin: Constants.sizeXs
@@ -239,7 +234,7 @@ CenterWindow {
                 ThemedText {
                     text: "Categories"
                     color: Theme.muted
-                    font.pixelSize: 10
+                    font.pixelSize: Constants.sizeXs + 2
                     font.bold: true
                     Layout.leftMargin: Constants.sizeXs
                     Layout.bottomMargin: 2
@@ -302,7 +297,7 @@ CenterWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: 4
                                 text: modelData.name || ""
-                                color: Theme.purple
+                                color: Theme.accent
                                 font.pixelSize: Constants.sizeMd
                                 font.bold: true
                             }
@@ -344,8 +339,7 @@ CenterWindow {
             }
 
             ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AlwaysOn
-                visible: size < 1
+                policy: ScrollBar.AlwaysOff
             }
 
         }
@@ -361,9 +355,9 @@ CenterWindow {
         signal clicked()
 
         Layout.fillWidth: true
-        Layout.preferredHeight: 32
-        radius: Constants.sizeXs
-        color: isActive ? Theme.bgSecondary : (itemHover.hovered ? Qt.rgba(Theme.bgSecondary.r, Theme.bgSecondary.g, Theme.bgSecondary.b, 0.5) : Qt.rgba(Theme.bgSecondary.r, Theme.bgSecondary.g, Theme.bgSecondary.b, 0))
+        Layout.preferredHeight: Constants.size3Xl
+        radius: Constants.sizeLg
+        color: isActive ? Theme.bgSecondary : (itemHover.hovered ? Theme.bgSecondary : "transparent")
 
         RowLayout {
             anchors.fill: parent
@@ -374,15 +368,15 @@ CenterWindow {
             Rectangle {
                 width: 3
                 height: 14
-                radius: 2
-                color: Theme.purple
+                radius: width / 2
+                color: Theme.accent
                 visible: isActive
             }
 
             ThemedText {
                 text: icon
                 visible: icon !== ""
-                color: isActive ? Theme.purple : Theme.fg
+                color: isActive ? Theme.accent : Theme.fg
                 font.pixelSize: Constants.sizeMd
                 Layout.preferredWidth: 20
                 horizontalAlignment: Text.AlignHCenter
@@ -390,7 +384,7 @@ CenterWindow {
 
             ThemedText {
                 text: label
-                color: isActive ? Theme.purple : Theme.fg
+                color: isActive ? Theme.accent : Theme.fg
                 font.pixelSize: Constants.sizeSm
                 font.bold: isActive
                 Layout.fillWidth: true
@@ -401,7 +395,7 @@ CenterWindow {
                 text: subLabel
                 visible: subLabel !== ""
                 color: Theme.muted
-                font.pixelSize: 10
+                font.pixelSize: Constants.sizeXs + 2
             }
 
         }
@@ -462,7 +456,7 @@ CenterWindow {
                             anchors.centerIn: parent
                             anchors.verticalCenterOffset: -1
                             text: modelData.isKey ? modelData.text : ""
-                            color: Theme.yellow
+                            color: Theme.accent
                             font.pixelSize: Constants.sizeSm
                             font.bold: true
                         }

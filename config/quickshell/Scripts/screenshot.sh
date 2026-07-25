@@ -9,7 +9,6 @@ DIR="$HOME/Pictures/Screenshots"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 FILENAME="$DIR/Shot-${TIMESTAMP}.png"
 LOG="/tmp/screenshot_debug.log"
-ICON_PATH="accessories-screenshot"
 
 mkdir -p "$DIR"
 
@@ -17,9 +16,9 @@ pkill -x slurp 2>/dev/null
 
 show_notification() {
   if [ -f "$FILENAME" ]; then
-    notify-send -r 699 -i "$FILENAME" "Screenshot" "Copied to clipboard"
+    notify-send -r 699 "Screenshot" "Copied to clipboard"
   else
-    notify-send -r 699 -i "$ICON_PATH" "Screenshot" "Canceled"
+    notify-send -r 699 "Screenshot" "Canceled"
   fi
 }
 
@@ -38,6 +37,9 @@ take_screenshot() {
     ;;
 
   "area" | "select")
+    TEMP_FULL="/tmp/screenshot_temp_full.png"
+    grim "$TEMP_FULL" >>"$LOG" 2>&1
+
     TIMEOUT=20
     COUNT=0
     GEOM=""
@@ -54,10 +56,21 @@ take_screenshot() {
       COUNT=$((COUNT + 1))
     done
 
-    if [ -n "$GEOM" ]; then
-      grim -g "$GEOM" "$FILENAME" >>"$LOG" 2>&1
+    if [ -n "$GEOM" ] && [ -f "$TEMP_FULL" ]; then
+      if [[ "$GEOM" =~ ^([0-9]+),([0-9]+)\ ([0-9]+)x([0-9]+)$ ]]; then
+        X="${BASH_REMATCH[1]}"
+        Y="${BASH_REMATCH[2]}"
+        W="${BASH_REMATCH[3]}"
+        H="${BASH_REMATCH[4]}"
+        CROP_GEOM="${W}x${H}+${X}+${Y}"
+        convert "$TEMP_FULL" -crop "$CROP_GEOM" +repage "$FILENAME" >>"$LOG" 2>&1
+      else
+        grim -g "$GEOM" "$FILENAME" >>"$LOG" 2>&1
+      fi
+      rm -f "$TEMP_FULL"
     else
-      echo "Slurp timed out or canceled" >>"$LOG"
+      echo "Slurp timed out, canceled, or temp file missing" >>"$LOG"
+      rm -f "$TEMP_FULL"
       return 1
     fi
     ;;
@@ -66,9 +79,26 @@ take_screenshot() {
     sleep 0.5
     RAW_JSON=$(hyprctl activewindow -j 2>>"$LOG")
     WINDOW_GEOMETRY=$(echo "$RAW_JSON" | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+    WIN_W=$(echo "$RAW_JSON" | jq -r '.size[0]')
+    WIN_H=$(echo "$RAW_JSON" | jq -r '.size[1]')
 
     if [ -n "$WINDOW_GEOMETRY" ] && [ "$WINDOW_GEOMETRY" != "null" ]; then
       grim -g "$WINDOW_GEOMETRY" "$FILENAME" >>"$LOG" 2>&1
+
+      ROUNDING=$(hyprctl getoption decoration:rounding | awk '/int:/ {print $2}')
+      ROUNDING=${ROUNDING:-10}
+
+      convert "$FILENAME" \
+        \( +clone \
+        -alpha extract \
+        -fill black -colorize 100 \
+        -fill white \
+        -draw "roundrectangle 0,0 $((WIN_W - 1)),$((WIN_H - 1)) ${ROUNDING},${ROUNDING}" \
+        \) \
+        -alpha off \
+        -compose CopyOpacity \
+        -composite \
+        PNG32:"$FILENAME" >>"$LOG" 2>&1
     else
       return 1
     fi
@@ -78,7 +108,7 @@ take_screenshot() {
 
 case "$MODE" in
 "full_delay" | "area_delay")
-  NOTIFY_ID=$(notify-send -p -i "$ICON_PATH" -t 5000 "Screenshot" "Taking shot in 5 seconds...")
+  NOTIFY_ID=$(notify-send -p -t 5000 "Screenshot" "Taking screenshot...")
   CLOSED=false
   trap 'CLOSED=true' USR2
 
@@ -93,40 +123,40 @@ case "$MODE" in
   trap 'kill $MONITOR_PID 2>/dev/null; exit 0' TERM INT EXIT
 
   SILENT=false
-  for i in {4..1}; do
-    if [ "$CLOSED" = true ]; then
-      SILENT=true
-    fi
+  for i in {5..1}; do
     sleep 1 &
     wait $!
-    if [ "$CLOSED" = true ]; then
-      SILENT=true
-    fi
-
-    if [ "$SILENT" = false ]; then
-      NEW_ID=$(notify-send -p -r $NOTIFY_ID -i "$ICON_PATH" -t 5000 "Screenshot" "Taking shot in $i seconds..." 2>/dev/null)
-      if [ -z "$NEW_ID" ] || [ "$NEW_ID" != "$NOTIFY_ID" ]; then
-        if [ -n "$NEW_ID" ]; then
-          gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.CloseNotification $NEW_ID >/dev/null 2>&1
-        fi
-        SILENT=true
-      fi
-    fi
   done
+  if [ "$CLOSED" = true ]; then
+    SILENT=true
+  fi
   gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.CloseNotification $NOTIFY_ID >/dev/null 2>&1
   sleep 0.1
   ACTUAL_MODE=${MODE%_delay}
   take_screenshot "$ACTUAL_MODE"
   ;;
 "clipboard")
-  sleep 0.5
+  TEMP_FULL="/tmp/screenshot_temp_full.png"
+  grim "$TEMP_FULL" >>"$LOG" 2>&1
+
   GEOM=$(slurp -d 2>>"$LOG")
-  if [ -n "$GEOM" ]; then
-    grim -g "$GEOM" - | wl-copy --type image/png
+  if [ -n "$GEOM" ] && [ -f "$TEMP_FULL" ]; then
+    if [[ "$GEOM" =~ ^([0-9]+),([0-9]+)\ ([0-9]+)x([0-9]+)$ ]]; then
+      X="${BASH_REMATCH[1]}"
+      Y="${BASH_REMATCH[2]}"
+      W="${BASH_REMATCH[3]}"
+      H="${BASH_REMATCH[4]}"
+      CROP_GEOM="${W}x${H}+${X}+${Y}"
+      convert "$TEMP_FULL" -crop "$CROP_GEOM" +repage png:- | wl-copy --type image/png
+    else
+      grim -g "$GEOM" - | wl-copy --type image/png
+    fi
     play_sound
-    notify-send -r 699 -i "$ICON_PATH" "Screenshot" "Area copied to clipboard"
+    notify-send -r 699 "Screenshot" "Area copied to clipboard"
+    rm -f "$TEMP_FULL"
   else
-    notify-send -r 699 -i "$ICON_PATH" "Screenshot" "Canceled"
+    notify-send -r 699 "Screenshot" "Canceled"
+    rm -f "$TEMP_FULL"
   fi
   exit 0
   ;;

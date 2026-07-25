@@ -50,10 +50,22 @@ NVIM_KEY_MAP = {
     "<S-h>": "Shift+H",
     "<S-l>": "Shift+L",
     "<leader>": "Space",
+    "<C-d>": "Ctrl+D",
+    "<C-u>": "Ctrl+U",
+    "<A-Left>": "Alt+←",
+    "<A-Down>": "Alt+↓",
+    "<A-Up>": "Alt+↑",
+    "<A-Right>": "Alt+→",
 }
 
 
 def parse_mods(mod_str):
+    mod_str = (
+        mod_str.replace("mainMod", "SUPER")
+        .replace("..", "")
+        .replace('"', "")
+        .replace("'", "")
+    )
     parts = re.split(r"[\s]+", mod_str.strip())
     return [MOD_MAP.get(p, p) for p in parts if p]
 
@@ -89,11 +101,11 @@ def parse_keybinds(filepath):
         for line in f:
             line = line.rstrip()
 
-            if not line or line.startswith("$"):
+            if not line or line.startswith("local") or line.startswith("$"):
                 continue
 
-            if line.startswith("## "):
-                name = line[3:].strip()
+            if line.startswith("-- ## "):
+                name = line[6:].strip()
                 target = SECTION_MERGE_HYPR.get(name, name)
                 if target not in merged:
                     merged[target] = []
@@ -104,11 +116,42 @@ def parse_keybinds(filepath):
                 seen_group = {}
                 continue
 
-            if line.startswith("# "):
-                current_desc = line[2:].strip()
+            if line.startswith("-- # "):
+                current_desc = line[5:].strip()
                 continue
 
-            m = re.match(r"^bind[a-z]*\s*=\s*(.*?),\s*(.+?),", line)
+            m = None
+            bind_m = re.match(r"^hl\.bind[a-z]*\s*\(\s*(.*?)\s*,", line)
+            if bind_m:
+                arg = bind_m.group(1)
+                clean = (
+                    arg.replace("mainMod", "SUPER")
+                    .replace("..", "")
+                    .replace('"', "")
+                    .replace("'", "")
+                    .strip()
+                )
+                parts = clean.split(" + ")
+
+                class MockMatch:
+                    def __init__(self, p):
+                        self.p = p
+
+                    def group(self, i):
+                        return self.p[i - 1]
+
+                if len(parts) >= 2:
+                    mods = " ".join([p.strip() for p in parts[:-1]])
+                    m = MockMatch([mods, parts[-1].strip()])
+                elif len(parts) == 1:
+                    m = MockMatch(["", parts[0].strip()])
+            else:
+                kw_m = re.match(
+                    r"^hl\.keyword\(\s*\"bind[a-z]*\"\s*,\s*\"(.*?),\s*(.+?),", line
+                )
+                if kw_m:
+                    m = kw_m
+
             if not m or not current_target:
                 continue
 
@@ -295,7 +338,7 @@ if __name__ == "__main__":
                 break
         parse_nvim_keymaps(nvim_conf)
     else:
-        conf = os.path.expanduser("~/.config/hypr/keybinds.conf")
+        conf = os.path.expanduser("~/.config/hypr/keybinds.lua")
         if len(sys.argv) > 1:
             conf = sys.argv[1]
         parse_keybinds(conf)

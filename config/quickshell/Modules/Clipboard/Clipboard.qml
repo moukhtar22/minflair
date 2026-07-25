@@ -5,6 +5,9 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
+import qs.Core.Windows
 
 CenterWindow {
     id: root
@@ -105,17 +108,6 @@ CenterWindow {
         clearProc.running = true;
     }
 
-    footerLeftText: filteredModel.count + (filteredModel.count === 1 ? " item" : " items") + " found"
-    footerKeyHints: [{
-        "key": "↑↓",
-        "description": "Navigate"
-    }, {
-        "key": "󰌑",
-        "description": "Select"
-    }, {
-        "key": "DEL",
-        "description": "Delete"
-    }]
     popupId: "clipboard"
     preferredHeight: 480
     preferredWidth: 600
@@ -163,6 +155,9 @@ CenterWindow {
                     return ;
                 }
                 let lines = output.split('\n');
+                if (SettingsService.clipboardMaxItems > 0)
+                    lines = lines.slice(0, SettingsService.clipboardMaxItems);
+
                 let imageIds = [];
                 lines.forEach(function(line) {
                     if (line.trim() === "")
@@ -233,68 +228,44 @@ CenterWindow {
             Layout.fillWidth: true
             spacing: Constants.sizeXs
 
-            Rectangle {
+            ThemedSearchBar {
+                id: searchField
+
                 Layout.fillWidth: true
-                Layout.preferredHeight: 40
-                color: Theme.bgSecondary
-                radius: Constants.sizeXl
-                border.color: searchField.activeFocus ? Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.4) : Qt.rgba(Theme.border.r, Theme.border.g, Theme.border.b, 0.2)
-                border.width: 1
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: Constants.sizeLg
-                    anchors.rightMargin: Constants.sizeLg
-                    spacing: Constants.sizeXs
-
-                    ThemedText {
-                        text: ""
-                        font.pixelSize: Constants.sizeLg
-                    }
-
-                    TextField {
-                        id: searchField
-
-                        Layout.fillWidth: true
-                        placeholderText: "Search clipboard history..."
-                        placeholderTextColor: Theme.muted
-                        color: Theme.fg
-                        font.pixelSize: Constants.sizeMd
-                        font.family: Constants.fontFamily
-                        background: null
-                        onTextChanged: root.filterClipboard(text)
-                        Keys.onPressed: function(event) {
-                            if (event.key === Qt.Key_Down) {
-                                clipboardView.currentIndex = Math.min(clipboardView.currentIndex + 1, filteredModel.count - 1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Up) {
-                                clipboardView.currentIndex = Math.max(clipboardView.currentIndex - 1, 0);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                let idx = clipboardView.currentIndex >= 0 ? clipboardView.currentIndex : 0;
-                                if (filteredModel.count > idx) {
-                                    let item = filteredModel.get(idx);
-                                    copyToClipboard(item.itemId);
-                                    event.accepted = true;
-                                }
-                            } else if (event.key === Qt.Key_Delete) {
-                                let idx = clipboardView.currentIndex;
-                                if (idx >= 0 && filteredModel.count > idx) {
-                                    let item = filteredModel.get(idx);
-                                    deleteItem(idx, item.fullLine);
-                                    event.accepted = true;
-                                }
-                            }
+                preferredHeight: 40
+                placeholderText: "Search clipboard history..."
+                onSearchRequested: (text) => {
+                    return root.filterClipboard(text);
+                }
+                textField.font.pixelSize: Constants.sizeMd
+                textField.Keys.onPressed: function(event) {
+                    if (event.key === Qt.Key_Down) {
+                        clipboardView.currentIndex = Math.min(clipboardView.currentIndex + 1, filteredModel.count - 1);
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Up) {
+                        clipboardView.currentIndex = Math.max(clipboardView.currentIndex - 1, 0);
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        let idx = clipboardView.currentIndex >= 0 ? clipboardView.currentIndex : 0;
+                        if (filteredModel.count > idx) {
+                            let item = filteredModel.get(idx);
+                            copyToClipboard(item.itemId);
+                            event.accepted = true;
+                        }
+                    } else if (event.key === Qt.Key_Delete) {
+                        let idx = clipboardView.currentIndex;
+                        if (idx >= 0 && filteredModel.count > idx) {
+                            let item = filteredModel.get(idx);
+                            deleteItem(idx, item.fullLine);
+                            event.accepted = true;
                         }
                     }
-
                 }
-
             }
 
-            IconButton {
-                icon: "󰆴"
-                iconColor: Theme.red
+            SvgIconButton {
+                icon: "trash"
+                iconColor: Theme.accent
                 iconSize: Constants.sizeXl
                 visible: filteredModel.count > 0
                 onClicked: root.clearHistory()
@@ -308,13 +279,13 @@ CenterWindow {
 
             ColumnLayout {
                 anchors.centerIn: parent
-                opacity: filteredModel.count === 0 && searchField.text === "" ? 1 : 0
-                visible: opacity > 0
+                visible: filteredModel.count === 0 && searchField.text === ""
 
-                ThemedText {
-                    text: "󰅍"
-                    color: Theme.muted
-                    font.pixelSize: 72
+                SvgIcon {
+                    icon: "ghost"
+                    iconColor: Theme.muted
+                    iconSize: 72
+                    flat: true
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -325,24 +296,17 @@ CenterWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                    }
-
-                }
-
             }
 
             ColumnLayout {
                 anchors.centerIn: parent
-                opacity: filteredModel.count === 0 && searchField.text !== "" ? 1 : 0
-                visible: opacity > 0
+                visible: filteredModel.count === 0 && searchField.text !== ""
 
-                ThemedText {
-                    text: "󰩉"
-                    color: Theme.muted
-                    font.pixelSize: 72
+                SvgIcon {
+                    icon: "ghost"
+                    iconColor: Theme.muted
+                    iconSize: 72
+                    flat: true
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -351,13 +315,6 @@ CenterWindow {
                     color: Theme.muted
                     font.pixelSize: Constants.sizeMd
                     Layout.alignment: Qt.AlignHCenter
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                    }
-
                 }
 
             }
@@ -467,9 +424,9 @@ CenterWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Constants.sizeXs
-                        color: Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.08)
-                        border.color: Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.2)
+                        radius: Constants.sizeLg
+                        color: Theme.bgSecondary
+                        border.color: Theme.accent
                         border.width: 1
 
                         Rectangle {
@@ -480,8 +437,8 @@ CenterWindow {
                             anchors.topMargin: 8
                             anchors.bottomMargin: 8
                             width: 3
-                            radius: 2
-                            color: Theme.purple
+                            radius: width / 2
+                            color: Theme.accent
                         }
 
                     }
@@ -499,17 +456,9 @@ CenterWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Constants.sizeXs
+                        radius: Constants.sizeLg
                         color: Theme.bgSecondary
-                        opacity: hoverHandler.hovered && !isCurrent ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Constants.animNormal
-                            }
-
-                        }
-
+                        visible: hoverHandler.hovered && !isCurrent
                     }
 
                     RowLayout {
@@ -523,7 +472,7 @@ CenterWindow {
                         ThemedText {
                             text: model.text
                             visible: !(model.isImage !== undefined ? model.isImage : false)
-                            color: isCurrent ? Theme.purple : Theme.fg
+                            color: isCurrent ? Theme.accent : Theme.fg
                             font.bold: isCurrent
                             font.pixelSize: Constants.sizeMd
                             wrapMode: isCurrent ? Text.Wrap : Text.NoWrap
@@ -560,9 +509,9 @@ CenterWindow {
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: Constants.sizeXs
+                                radius: Constants.sizeLg
                                 color: Theme.bgSecondary
-                                border.color: isCurrent ? Theme.purple : Theme.border
+                                border.color: isCurrent ? Theme.accent : Theme.border
                                 border.width: 1
                                 clip: true
 
@@ -591,24 +540,15 @@ CenterWindow {
                             visible: model.isImage !== undefined ? model.isImage : false
                         }
 
-                        IconButton {
-                            icon: "󰅖"
-                            iconColor: Theme.red
+                        SvgIconButton {
+                            icon: "x"
+                            iconColor: Theme.accent
                             iconSize: Constants.sizeMd
                             Layout.alignment: Qt.AlignVCenter
-                            opacity: (hoverHandler.hovered || isCurrent) ? 1 : 0
-                            visible: opacity > 0
+                            visible: (hoverHandler.hovered || isCurrent)
                             onClicked: {
                                 root.deleteItem(index, model.fullLine);
                             }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Constants.animFast
-                                }
-
-                            }
-
                         }
 
                     }
@@ -632,7 +572,7 @@ CenterWindow {
                 }
 
                 ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
+                    policy: ScrollBar.AlwaysOff
                     active: true
                 }
 

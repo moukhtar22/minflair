@@ -6,6 +6,8 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
+import qs.Core.Windows
 
 CenterWindow {
     id: root
@@ -152,25 +154,6 @@ CenterWindow {
         root.isOpen = false;
     }
 
-    footerLeftText: {
-        if (root.filteredApps.length > 0)
-            return root.filteredApps.length + (root.filteredApps.length === 1 ? " application found" : " applications found");
-
-        return "No applications found";
-    }
-    footerKeyHints: [{
-        "key": "↑↓",
-        "description": "Navigate"
-    }, {
-        "key": "󰌑",
-        "description": "Run"
-    }, {
-        "key": "󰌒",
-        "description": "Next Category"
-    }, {
-        "key": "󰌥",
-        "description": "Prev Category"
-    }]
     onSelectedCategoryChanged: filterApps(searchField.text)
     onAllAppsChanged: {
         let cats = ["All"];
@@ -250,48 +233,26 @@ CenterWindow {
 
     }
 
-    Rectangle {
+    ThemedSearchBar {
+        id: searchField
+
         Layout.fillWidth: true
-        Layout.preferredHeight: 40
-        color: Theme.bgSecondary
-        radius: Constants.sizeXl
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Constants.sizeLg
-            anchors.rightMargin: Constants.sizeLg
-            spacing: Constants.sizeXs
-
-            ThemedText {
-                text: ""
-                font.pixelSize: Constants.sizeLg
-            }
-
-            TextField {
-                id: searchField
-
-                Layout.fillWidth: true
-                placeholderText: "Search applications..."
-                placeholderTextColor: Theme.muted
-                color: Theme.fg
-                font.pixelSize: Constants.sizeMd
-                font.family: Constants.fontFamily
-                background: null
-                onTextChanged: root.filterApps(text)
-                Keys.onPressed: function(event) {
-                    root.handleKeyPress(event, true);
-                }
-            }
-
+        preferredHeight: 40
+        placeholderText: "Search applications..."
+        onSearchRequested: (text) => {
+            return root.filterApps(text);
         }
-
+        textField.font.pixelSize: Constants.sizeMd
+        textField.Keys.onPressed: function(event) {
+            root.handleKeyPress(event, true);
+        }
     }
 
     Rectangle {
         id: categoryBar
 
         Layout.fillWidth: true
-        Layout.preferredHeight: 32
+        Layout.preferredHeight: Constants.size3Xl
         color: "transparent"
 
         ListView {
@@ -306,8 +267,8 @@ CenterWindow {
             delegate: Rectangle {
                 width: catText.implicitWidth + Constants.sizeLg * 2
                 height: 30
-                radius: 15
-                color: (root.selectedCategory === modelData) ? Theme.purple : (hoverHandler.hovered ? Theme.bgSecondary : "transparent")
+                radius: height / 2
+                color: (root.selectedCategory === modelData) ? Theme.accent : (hoverHandler.hovered ? Theme.bgSecondary : "transparent")
                 border.color: (root.selectedCategory === modelData) ? "transparent" : Theme.border
                 border.width: 1
 
@@ -347,10 +308,11 @@ CenterWindow {
             anchors.centerIn: parent
             visible: root.filteredApps.length === 0 && searchField.text !== ""
 
-            ThemedText {
-                text: "󰩉"
-                color: Theme.muted
-                font.pixelSize: 72
+            SvgIcon {
+                icon: "ghost"
+                iconColor: Theme.muted
+                iconSize: 72
+                flat: true
                 Layout.alignment: Qt.AlignHCenter
             }
 
@@ -388,21 +350,8 @@ CenterWindow {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Constants.sizeXs
+                    radius: Constants.sizeLg
                     color: Theme.bgSecondary
-
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.leftMargin: 2
-                        anchors.topMargin: 8
-                        anchors.bottomMargin: 8
-                        width: 3
-                        radius: 2
-                        color: Theme.purple
-                    }
-
                 }
 
             }
@@ -456,17 +405,9 @@ CenterWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Constants.sizeXs
+                        radius: Constants.sizeLg
                         color: Theme.bgSecondary
-                        opacity: hoverHandler.hovered && !isCurrent ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Constants.animNormal
-                            }
-
-                        }
-
+                        visible: hoverHandler.hovered && !isCurrent
                     }
 
                     RowLayout {
@@ -476,8 +417,8 @@ CenterWindow {
                         spacing: Constants.sizeLg
 
                         Item {
-                            Layout.preferredWidth: 24
-                            Layout.preferredHeight: 24
+                            Layout.preferredWidth: Constants.size2Xl
+                            Layout.preferredHeight: Constants.size2Xl
 
                             Image {
                                 id: appIcon
@@ -487,28 +428,35 @@ CenterWindow {
                                     if (!modelData.icon)
                                         return "";
 
-                                    if (modelData.icon.startsWith("/") || modelData.icon.startsWith("file://"))
-                                        return modelData.icon.startsWith("file://") ? modelData.icon : "file://" + modelData.icon;
+                                    let path = modelData.icon;
+                                    let home = Quickshell.env("HOME");
+                                    if (path.startsWith("$HOME"))
+                                        path = home + path.substring(5);
+                                    else if (path.startsWith("~"))
+                                        path = home + path.substring(1);
+                                    if (path.startsWith("/") || path.startsWith("file://"))
+                                        return path.startsWith("file://") ? path : "file://" + path;
 
-                                    return Quickshell.iconPath(modelData.icon, true);
+                                    return Quickshell.iconPath(path, true);
                                 }
                                 fillMode: Image.PreserveAspectFit
                                 visible: status === Image.Ready
                             }
 
-                            ThemedText {
-                                anchors.centerIn: parent
+                            SvgIcon {
+                                anchors.fill: parent
+                                icon: "rocket"
+                                iconSize: Constants.size2Xl
+                                flat: true
+                                iconColor: isCurrent ? Theme.accent : Theme.muted
                                 visible: !appIcon.visible
-                                text: ""
-                                color: isCurrent ? Theme.purple : Theme.muted
-                                font.pixelSize: Constants.sizeLg
                             }
 
                         }
 
                         ThemedText {
                             text: modelData.name
-                            color: isCurrent ? Theme.purple : Theme.fg
+                            color: isCurrent ? Theme.accent : Theme.fg
                             font.bold: isCurrent
                             font.pixelSize: Constants.sizeMd
                             Layout.fillWidth: true
@@ -562,13 +510,12 @@ CenterWindow {
                         }
                     }
 
-                    IconButton {
-                        icon: ""
+                    SvgIconButton {
+                        icon: "chevron-right"
                         iconSize: Constants.sizeMd
                         visible: delegateRoot.hasActions
-                        iconColor: Theme.muted
-                        activeColor: Theme.fg
                         isActive: delegateRoot.isExpanded
+                        iconColor: isActive ? Theme.fg : Theme.muted
                         anchors.right: parent.right
                         anchors.rightMargin: Constants.sizeLg
                         anchors.verticalCenter: mainContent.verticalCenter
@@ -601,8 +548,7 @@ CenterWindow {
                     y: 44 + Constants.sizeXs / 2
                     width: parent.width
                     height: actionsColumn.implicitHeight
-                    opacity: delegateRoot.isExpanded ? 1 : 0
-                    visible: opacity > 0
+                    visible: delegateRoot.isExpanded
 
                     Rectangle {
                         x: Constants.sizeLg + 11
@@ -610,8 +556,7 @@ CenterWindow {
                         width: 2
                         height: parent.height - 12
                         color: Theme.muted
-                        opacity: 0.3
-                        radius: 1
+                        radius: width / 2
                     }
 
                     Repeater {
@@ -623,15 +568,7 @@ CenterWindow {
                             width: 16
                             height: 2
                             color: Theme.muted
-                            opacity: 0.3
-                            radius: 1
-                        }
-
-                    }
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Constants.animNormal
+                            radius: height / 2
                         }
 
                     }
@@ -644,8 +581,7 @@ CenterWindow {
                     y: 44 + Constants.sizeXs / 2
                     width: parent.width
                     spacing: 4
-                    opacity: delegateRoot.isExpanded ? 1 : 0
-                    visible: opacity > 0
+                    visible: delegateRoot.isExpanded
 
                     Repeater {
                         model: modelData.actions || []
@@ -653,10 +589,12 @@ CenterWindow {
                         delegate: Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 34
-                            Layout.leftMargin: Constants.sizeLg + 32
+                            Layout.leftMargin: Constants.sizeLg + Constants.size3Xl
                             Layout.rightMargin: Constants.sizeLg
-                            color: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? Theme.bgSecondary : Qt.rgba(Theme.bgSecondary.r, Theme.bgSecondary.g, Theme.bgSecondary.b, 0)
-                            radius: Constants.sizeXs
+                            color: Theme.bgSecondary
+                            radius: Constants.sizeLg
+                            border.width: 1
+                            border.color: delegateRoot.currentActionIndex === index ? Theme.accent : Theme.border
 
                             RowLayout {
                                 anchors.fill: parent
@@ -673,9 +611,8 @@ CenterWindow {
                                         anchors.centerIn: parent
                                         width: 6
                                         height: 6
-                                        radius: 3
-                                        color: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? Theme.purple : Theme.muted
-                                        opacity: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? 1 : 0.5
+                                        radius: width / 2
+                                        color: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? Theme.accent : Theme.muted
                                         scale: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? 1.5 : 1
 
                                         Behavior on color {
@@ -693,13 +630,6 @@ CenterWindow {
 
                                         }
 
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: Constants.animFast
-                                            }
-
-                                        }
-
                                     }
 
                                 }
@@ -707,7 +637,7 @@ CenterWindow {
                                 ThemedText {
                                     Layout.fillWidth: true
                                     text: modelData.name
-                                    color: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? Theme.purple : Theme.fg
+                                    color: ((delegateRoot.isExpanded && delegateRoot.currentActionIndex === index) || actionMouseArea.containsMouse) ? Theme.accent : Theme.fg
                                     font.pixelSize: Constants.sizeMd
                                     Layout.alignment: Qt.AlignVCenter
 
@@ -738,13 +668,13 @@ CenterWindow {
 
                             }
 
-                        }
+                            Behavior on border.color {
+                                ColorAnimation {
+                                    duration: Constants.animFast
+                                }
 
-                    }
+                            }
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Constants.animNormal
                         }
 
                     }
@@ -762,7 +692,7 @@ CenterWindow {
             }
 
             ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
+                policy: ScrollBar.AlwaysOff
                 active: true
             }
 

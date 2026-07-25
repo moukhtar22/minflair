@@ -6,6 +6,9 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
+import qs.Core.Windows
 
 CenterWindow {
     id: root
@@ -45,19 +48,6 @@ CenterWindow {
         root.isOpen = false;
     }
 
-    footerLeftText: {
-        if (filteredModel.count > 0)
-            return filteredModel.count + (filteredModel.count === 1 ? " wallpaper found" : " wallpapers found");
-
-        return "No wallpapers found";
-    }
-    footerKeyHints: [{
-        "key": "↑↓←→",
-        "description": "Navigate"
-    }, {
-        "key": "󰌑",
-        "description": "Apply"
-    }]
     popupId: "wallpaper"
     preferredHeight: 550
     preferredWidth: 800
@@ -122,70 +112,48 @@ CenterWindow {
 
     }
 
-    Rectangle {
+    ThemedSearchBar {
+        id: searchField
+
         Layout.fillWidth: true
-        Layout.preferredHeight: 40
-        color: Theme.bgSecondary
-        radius: Constants.sizeXl
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Constants.sizeLg
-            anchors.rightMargin: Constants.sizeLg
-            spacing: Constants.sizeXs
-
-            ThemedText {
-                text: ""
-                font.pixelSize: Constants.sizeLg
-            }
-
-            TextField {
-                id: searchField
-
-                Layout.fillWidth: true
-                placeholderText: "Search wallpapers..."
-                placeholderTextColor: Theme.muted
-                color: Theme.fg
-                font.pixelSize: Constants.sizeMd
-                font.family: Constants.fontFamily
-                background: null
-                onTextChanged: root.filterWallpapers(text)
-                Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Right) {
-                        if (wallView.count > 0) {
-                            wallView.currentIndex = Math.min(wallView.currentIndex + 1, wallView.count - 1);
-                            event.accepted = true;
-                        }
-                    } else if (event.key === Qt.Key_Left) {
-                        if (wallView.count > 0) {
-                            wallView.currentIndex = Math.max(wallView.currentIndex - 1, 0);
-                            event.accepted = true;
-                        }
-                    } else if (event.key === Qt.Key_Down) {
-                        if (wallView.count > 0) {
-                            let nextIdx = wallView.currentIndex + 3;
-                            wallView.currentIndex = Math.min(nextIdx, wallView.count - 1);
-                            event.accepted = true;
-                        }
-                    } else if (event.key === Qt.Key_Up) {
-                        if (wallView.count > 0) {
-                            let prevIdx = wallView.currentIndex - 3;
-                            wallView.currentIndex = Math.max(prevIdx, 0);
-                            event.accepted = true;
-                        }
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        let idx = wallView.currentIndex >= 0 ? wallView.currentIndex : 0;
-                        if (filteredModel.count > idx) {
-                            let wall = filteredModel.get(idx);
-                            setWallpaper(wall.rawPath);
-                            event.accepted = true;
-                        }
-                    }
+        preferredHeight: 40
+        placeholderText: "Search wallpapers..."
+        onSearchRequested: (text) => {
+            return root.filterWallpapers(text);
+        }
+        textField.font.pixelSize: Constants.sizeMd
+        textField.Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Right) {
+                if (wallView.count > 0) {
+                    wallView.currentIndex = Math.min(wallView.currentIndex + 1, wallView.count - 1);
+                    event.accepted = true;
+                }
+            } else if (event.key === Qt.Key_Left) {
+                if (wallView.count > 0) {
+                    wallView.currentIndex = Math.max(wallView.currentIndex - 1, 0);
+                    event.accepted = true;
+                }
+            } else if (event.key === Qt.Key_Down) {
+                if (wallView.count > 0) {
+                    let nextIdx = wallView.currentIndex + 3;
+                    wallView.currentIndex = Math.min(nextIdx, wallView.count - 1);
+                    event.accepted = true;
+                }
+            } else if (event.key === Qt.Key_Up) {
+                if (wallView.count > 0) {
+                    let prevIdx = wallView.currentIndex - 3;
+                    wallView.currentIndex = Math.max(prevIdx, 0);
+                    event.accepted = true;
+                }
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                let idx = wallView.currentIndex >= 0 ? wallView.currentIndex : 0;
+                if (filteredModel.count > idx) {
+                    let wall = filteredModel.get(idx);
+                    setWallpaper(wall.rawPath);
+                    event.accepted = true;
                 }
             }
-
         }
-
     }
 
     Item {
@@ -196,10 +164,11 @@ CenterWindow {
             anchors.centerIn: parent
             visible: filteredModel.count === 0 && searchField.text === ""
 
-            ThemedText {
-                text: "󰸉"
-                color: Theme.bgSecondary
-                font.pixelSize: 72
+            SvgIcon {
+                icon: "ghost"
+                iconColor: Theme.muted
+                iconSize: 72
+                flat: true
                 Layout.alignment: Qt.AlignHCenter
             }
 
@@ -216,10 +185,11 @@ CenterWindow {
             anchors.centerIn: parent
             visible: filteredModel.count === 0 && searchField.text !== ""
 
-            ThemedText {
-                text: "󰩉"
-                color: Theme.muted
-                font.pixelSize: 72
+            SvgIcon {
+                icon: "ghost"
+                iconColor: Theme.muted
+                iconSize: 72
+                flat: true
                 Layout.alignment: Qt.AlignHCenter
             }
 
@@ -264,9 +234,9 @@ CenterWindow {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: Constants.sizeXs
-                    radius: Constants.sizeXs
+                    radius: Constants.sizeLg
                     color: "transparent"
-                    border.color: Theme.purple
+                    border.color: Theme.accent
                     border.width: 2
                     scale: 1.05
 
@@ -305,7 +275,7 @@ CenterWindow {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: Constants.sizeXs
-                    radius: Constants.sizeXs
+                    radius: Constants.sizeLg
                     color: Theme.bgSecondary
                     scale: isCurrent || hoverHandler.hovered ? 1.05 : 1
 
@@ -314,7 +284,7 @@ CenterWindow {
 
                         anchors.fill: parent
                         anchors.margins: isCurrent ? 2 : 1
-                        radius: Constants.sizeXs
+                        radius: Constants.sizeLg
                         visible: false
                     }
 
@@ -345,7 +315,7 @@ CenterWindow {
                         anchors.right: parent.right
                         height: nameText.contentHeight + Constants.sizeXs
                         color: Theme.bgSecondary
-                        radius: Constants.sizeXs
+                        radius: Constants.sizeLg
 
                         ThemedText {
                             id: nameText
@@ -384,7 +354,7 @@ CenterWindow {
             }
 
             ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
+                policy: ScrollBar.AlwaysOff
                 active: true
             }
 

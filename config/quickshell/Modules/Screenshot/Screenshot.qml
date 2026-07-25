@@ -5,6 +5,8 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
+import qs.Core.Windows
 
 CenterWindow {
     id: root
@@ -20,15 +22,8 @@ CenterWindow {
         root.isOpen = false;
     }
 
-    footerKeyHints: [{
-        "key": "↑↓",
-        "description": "Navigate"
-    }, {
-        "key": "󰌑",
-        "description": "Capture"
-    }]
     popupId: "screenshot"
-    preferredHeight: mainCol.implicitHeight + 32
+    preferredHeight: mainCol.implicitHeight + Constants.sizeLg * 2
     preferredWidth: 300
     onPopupOpened: {
         focusTimer.start();
@@ -72,6 +67,12 @@ CenterWindow {
             label: "Full (5s delay)"
             iconSource: ""
             shotMode: "full_delay"
+        }
+
+        ListElement {
+            label: "Area (5s delay)"
+            iconSource: ""
+            shotMode: "area_delay"
         }
 
         ListElement {
@@ -120,7 +121,7 @@ CenterWindow {
             }
 
             ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
+                policy: ScrollBar.AlwaysOff
                 active: true
             }
 
@@ -131,23 +132,8 @@ CenterWindow {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Constants.sizeXs
-                    color: Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.08)
-                    border.color: Qt.rgba(Theme.purple.r, Theme.purple.g, Theme.purple.b, 0.2)
-                    border.width: 1
-
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.leftMargin: 2
-                        anchors.topMargin: 8
-                        anchors.bottomMargin: 8
-                        width: 3
-                        radius: 2
-                        color: Theme.purple
-                    }
-
+                    radius: Constants.sizeLg
+                    color: Theme.bgSecondary
                 }
 
             }
@@ -161,17 +147,9 @@ CenterWindow {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Constants.sizeXs
+                    radius: Constants.sizeLg
                     color: Theme.bgSecondary
-                    opacity: hoverHandler.hovered && !isCurrent ? 1 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Constants.animNormal
-                        }
-
-                    }
-
+                    visible: hoverHandler.hovered && !isCurrent
                 }
 
                 RowLayout {
@@ -182,7 +160,7 @@ CenterWindow {
 
                     ThemedText {
                         text: model.iconSource
-                        color: isCurrent ? Theme.purple : Theme.fg
+                        color: isCurrent ? Theme.accent : Theme.fg
                         font.pixelSize: Constants.sizeLg
 
                         Behavior on color {
@@ -196,7 +174,7 @@ CenterWindow {
 
                     ThemedText {
                         text: model.label
-                        color: isCurrent ? Theme.purple : Theme.fg
+                        color: isCurrent ? Theme.accent : Theme.fg
                         font.bold: isCurrent
                         font.pixelSize: Constants.sizeMd
                         Layout.fillWidth: true
