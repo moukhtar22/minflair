@@ -141,11 +141,9 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                Rectangle {
-                    width: 12
-                    height: 1
-                    color: Theme.border
-                    Layout.alignment: Qt.AlignVCenter
+                Divider {
+                    implicitWidth: 12
+                    Layout.fillWidth: false
                 }
 
                 TypewriterText {

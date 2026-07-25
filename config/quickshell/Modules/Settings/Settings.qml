@@ -246,10 +246,8 @@ AppWindow {
             }
         }
 
-        Rectangle {
-            Layout.fillHeight: true
-            width: 1
-            color: Theme.border
+        Divider {
+            vertical: true
         }
 
         Item {

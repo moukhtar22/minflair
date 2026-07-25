@@ -62,10 +62,7 @@ Card {
 
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            height: 1
-            color: Theme.border
+        Divider {
         }
 
         RowLayout {

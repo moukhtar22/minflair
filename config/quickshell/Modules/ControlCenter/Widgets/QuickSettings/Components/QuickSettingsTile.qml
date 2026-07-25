@@ -108,10 +108,10 @@ Rectangle {
             spacing: Constants.sizeXs
             Layout.alignment: Qt.AlignVCenter
 
-            Rectangle {
-                width: 1
-                Layout.preferredHeight: 16
-                color: Theme.border
+            Divider {
+                vertical: true
+                Layout.preferredHeight: 24
+                Layout.fillHeight: false
             }
 
             SvgIconButton {

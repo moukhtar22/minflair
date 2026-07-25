@@ -24,10 +24,8 @@ Rectangle {
             font.pixelSize: Constants.sizeSm
         }
 
-        Rectangle {
-            width: 1
-            height: 12
-            color: Theme.border
+        Divider {
+            vertical: true
         }
 
         ThemedText {

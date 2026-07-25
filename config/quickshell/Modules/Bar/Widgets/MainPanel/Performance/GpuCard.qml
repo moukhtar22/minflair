@@ -34,11 +34,8 @@ PerformanceCard {
             value: root.gpuTemp
         }
 
-        Rectangle {
-            width: 1
-            height: Constants.sizeXl
-            color: Theme.border
-            visible: SystemStats.gpuVram !== "None"
+        Divider {
+            vertical: true
         }
 
         PerformanceMetric {

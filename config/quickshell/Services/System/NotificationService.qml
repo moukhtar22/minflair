@@ -158,7 +158,10 @@ Item {
             groupRepresentationIds = reps;
             root.updateNotificationData(notification);
         } else {
-            notification.dismiss();
+            if (!notification.alreadyDismissed) {
+                notification.alreadyDismissed = true;
+                notification.dismiss();
+            }
             let repData = notificationObjects[repId];
             if (repData) {
                 let displayNames = {
@@ -193,7 +196,8 @@ Item {
                         }
                     }
                     repData.popup = true;
-                    repData.timer.restart();
+                    repData.progress = 1;
+                    repData.progressAnim.restart();
                     activeListModel.insert(0, {
                         "id": repId,
                         "notifData": repData
@@ -223,7 +227,8 @@ Item {
             }
             if ((!nd.isDnd || nd.urgency === 2) && !nd.closed) {
                 nd.popup = true;
-                nd.timer.restart();
+                nd.progress = 1;
+                nd.progressAnim.restart();
             }
         }
         let historyUpdated = false;

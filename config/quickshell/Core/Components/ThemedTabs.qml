@@ -42,11 +42,9 @@ Item {
         target: rowLayout
     }
 
-    Rectangle {
+    Divider {
         anchors.bottom: parent.bottom
         width: parent.width
-        height: 1
-        color: Theme.border
     }
 
     Rectangle {

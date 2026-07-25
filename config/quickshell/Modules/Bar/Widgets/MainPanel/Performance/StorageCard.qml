@@ -28,10 +28,8 @@ PerformanceCard {
             value: root.usedText
         }
 
-        Rectangle {
-            width: 1
-            height: Constants.sizeXl
-            color: Theme.border
+        Divider {
+            vertical: true
         }
 
         PerformanceMetric {

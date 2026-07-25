@@ -222,13 +222,10 @@ CenterWindow {
                     }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
+                Divider {
                     Layout.margins: Constants.sizeXs
                     Layout.topMargin: 8
                     Layout.bottomMargin: 8
-                    color: Theme.bgSecondary
                 }
 
                 ThemedText {
@@ -256,10 +253,8 @@ CenterWindow {
 
         }
 
-        Rectangle {
-            Layout.fillHeight: true
-            Layout.preferredWidth: 1
-            color: Theme.bgSecondary
+        Divider {
+            vertical: true
         }
 
         Flickable {
@@ -302,11 +297,9 @@ CenterWindow {
                                 font.bold: true
                             }
 
-                            Rectangle {
+                            Divider {
                                 anchors.bottom: parent.bottom
                                 width: parent.width
-                                height: 1
-                                color: Theme.bgSecondary
                             }
 
                         }

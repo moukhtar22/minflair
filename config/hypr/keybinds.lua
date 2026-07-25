@@ -16,7 +16,7 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(
 	mainMod .. " + B",
 	hl.dsp.exec_cmd(
-		"command -v brave && brave || command -v firefox && firefox || command -v chromium && chromium || google-chrome-stable"
+		"if command -v brave; then brave; elif command -v firefox; then firefox; elif command -v chromium; then chromium; else google-chrome-stable; fi"
 	)
 )
 

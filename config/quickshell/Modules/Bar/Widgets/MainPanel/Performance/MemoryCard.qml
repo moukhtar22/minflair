@@ -25,10 +25,8 @@ PerformanceCard {
             value: SystemStats.memUsed.toFixed(1) + " GiB"
         }
 
-        Rectangle {
-            width: 1
-            height: Constants.sizeXl
-            color: Theme.border
+        Divider {
+            vertical: true
         }
 
         PerformanceMetric {
