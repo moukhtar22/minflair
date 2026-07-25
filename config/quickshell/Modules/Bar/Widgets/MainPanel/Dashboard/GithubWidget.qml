@@ -1,232 +1,192 @@
+import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
 
 Card {
     id: root
 
-    property string username: GithubConfig.username
-    property int publicRepos: 0
-    property int privateRepos: 0
-    property int followers: 0
-    property int totalStars: 0
-    property int totalForks: 0
-    property string topRepoName: "..."
-    property int topRepoStars: 0
-    property string topLanguage: "..."
-    property string joinedDate: "..."
-    property int totalCommits: 0
-    readonly property bool hasToken: GithubConfig.token !== ""
+    property string username: GithubService.username
+    property string avatarUrl: GithubService.avatarUrl
+    property string fullName: GithubService.fullName
+    property string bio: GithubService.bio
+    property string location: GithubService.location
+    property int publicRepos: GithubService.publicRepos
+    property int privateRepos: GithubService.privateRepos
+    property int followers: GithubService.followers
+    property int totalStars: GithubService.totalStars
+    property int totalForks: GithubService.totalForks
+    property string topRepoName: GithubService.topRepoName
+    property string topRepoDesc: GithubService.topRepoDesc
+    property int topRepoStars: GithubService.topRepoStars
+    property int topRepoForks: GithubService.topRepoForks
+    property string topRepoLang: GithubService.topRepoLang
+    property string joinedDate: GithubService.joinedDate
+    property int totalCommits: GithubService.totalCommits
+    property string topLanguage: GithubService.topLanguage
 
     clip: true
 
-    Process {
-        id: fetchProfile
-
-        command: root.hasToken ? ["curl", "-s", "-H", "Authorization: token " + GithubConfig.token, "https://api.github.com/user"] : ["curl", "-s", "https://api.github.com/users/" + root.username]
-        running: root.username !== ""
-        onExited: (code) => {
-            if (code === 0) {
-                try {
-                    const profile = JSON.parse(profileOutput.text);
-                    if (profile) {
-                        root.publicRepos = profile.public_repos || 0;
-                        if (root.hasToken)
-                            root.privateRepos = profile.total_private_repos || profile.owned_private_repos || 0;
-
-                        root.followers = profile.followers || 0;
-                        if (profile.created_at) {
-                            let date = new Date(profile.created_at);
-                            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                            root.joinedDate = months[date.getMonth()] + " " + date.getFullYear();
-                        }
-                    }
-                } catch (e) {
-                }
-            }
-        }
-
-        stdout: StdioCollector {
-            id: profileOutput
-        }
-
-    }
-
-    Process {
-        id: fetchRepos
-
-        command: root.hasToken ? ["curl", "-s", "-H", "Authorization: token " + GithubConfig.token, "https://api.github.com/user/repos?per_page=100&type=owner"] : ["curl", "-s", "https://api.github.com/users/" + root.username + "/repos?per_page=100"]
-        running: root.username !== ""
-        onExited: (code) => {
-            if (code === 0) {
-                try {
-                    const repos = JSON.parse(reposOutput.text);
-                    if (Array.isArray(repos)) {
-                        let starsSum = 0;
-                        let forksSum = 0;
-                        let maxStars = -1;
-                        let bestRepoName = "";
-                        let langCounts = {
-                        };
-                        for (let i = 0; i < repos.length; i++) {
-                            let r = repos[i];
-                            if (!r)
-                                continue;
-
-                            starsSum += r.stargazers_count || 0;
-                            forksSum += r.forks_count || 0;
-                            if (r.stargazers_count > maxStars) {
-                                maxStars = r.stargazers_count;
-                                bestRepoName = r.name;
-                            }
-                            if (r.language)
-                                langCounts[r.language] = (langCounts[r.language] || 0) + 1;
-
-                        }
-                        root.totalStars = starsSum;
-                        root.totalForks = forksSum;
-                        root.topRepoName = bestRepoName || "None";
-                        root.topRepoStars = maxStars > 0 ? maxStars : 0;
-                        let mostLang = "None";
-                        let maxLangCount = 0;
-                        for (let lang in langCounts) {
-                            if (langCounts[lang] > maxLangCount) {
-                                maxLangCount = langCounts[lang];
-                                mostLang = lang;
-                            }
-                        }
-                        root.topLanguage = mostLang;
-                    }
-                } catch (e) {
-                }
-            }
-        }
-
-        stdout: StdioCollector {
-            id: reposOutput
-        }
-
-    }
-
-    Process {
-        id: fetchTotalCommits
-
-        command: ["curl", "-s", "-H", "Authorization: token " + GithubConfig.token, "https://api.github.com/search/commits?q=author:" + root.username]
-        running: root.hasToken && root.username !== ""
-        onExited: (code) => {
-            if (code === 0) {
-                try {
-                    const search = JSON.parse(commitsOutput.text);
-                    if (search && search.total_count !== undefined)
-                        root.totalCommits = search.total_count;
-
-                } catch (e) {
-                }
-            }
-        }
-
-        stdout: StdioCollector {
-            id: commitsOutput
-        }
-
-    }
-
     ColumnLayout {
+        id: profileLayout
+
         anchors.fill: parent
-        anchors.margins: Constants.sizeLg
-        spacing: Constants.sizeSm
+        spacing: Constants.sizeXs
         visible: root.username !== ""
 
-        ThemedText {
-            text: "GitHub Stats"
-            color: Theme.purple
-            font.pixelSize: Constants.sizeSm + 1
-            font.weight: Font.Bold
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeMd
+
+            TapHandler {
+                onTapped: Qt.openUrlExternally("https://github.com/" + root.username)
+            }
+
+            HoverHandler {
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            Item {
+                id: avatarWrapper
+
+                width: 54
+                height: 54
+                Layout.alignment: Qt.AlignVCenter
+
+                Rectangle {
+                    id: gradientRing
+
+                    anchors.fill: parent
+                    radius: width / 2
+                    scale: avatarHover.hovered ? 1.06 : 1
+
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: Theme.accent
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: Theme.accentComplementary
+                        }
+
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Constants.animFast
+                            easing.type: Easing.OutQuad
+                        }
+
+                    }
+
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: 800
+                        loops: Animation.Infinite
+                        running: GithubService.isFetching
+                        onRunningChanged: {
+                            if (!running)
+                                gradientRing.rotation = 0;
+
+                        }
+                    }
+
+                }
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 50
+                    height: 50
+                    radius: width / 2
+                    color: Theme.bg
+                }
+
+                Item {
+                    id: avatarContainer
+
+                    anchors.centerIn: parent
+                    width: 44
+                    height: 44
+
+                    Image {
+                        id: userImage
+
+                        anchors.fill: parent
+                        source: (root.avatarUrl || root.username) ? (root.avatarUrl || "https://github.com/identicons/" + root.username + ".png") : ""
+                        fillMode: Image.PreserveAspectCrop
+                        visible: false
+                        antialiasing: true
+                    }
+
+                    Rectangle {
+                        id: mask
+
+                        anchors.fill: parent
+                        radius: width / 2
+                        visible: false
+                        antialiasing: true
+                    }
+
+                    OpacityMask {
+                        anchors.fill: parent
+                        source: userImage
+                        maskSource: mask
+                        visible: userImage.status === Image.Ready
+                    }
+
+                }
+
+                HoverHandler {
+                    id: avatarHover
+                }
+
+            }
+
+            ColumnLayout {
+                spacing: 2
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+
+                ThemedText {
+                    text: root.fullName || root.username
+                    font.pixelSize: Constants.sizeMd
+                    font.bold: true
+                    color: Theme.fg
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+
+                ThemedText {
+                    text: "@" + root.username
+                    font.pixelSize: Constants.sizeSm
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+
+            }
+
         }
 
-        RowLayout {
-            spacing: Constants.sizeLg
+        ThemedText {
+            visible: root.bio !== ""
+            text: root.bio
+            color: Theme.fg
+            wrapMode: Text.WordWrap
             Layout.fillWidth: true
+            maximumLineCount: 2
+            elide: Text.ElideRight
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: 6
-
-                GithubWidgetStat {
-                    icon: ""
-                    iconColor: Theme.yellow
-                    category: "Stars:"
-                    value: root.totalStars
-                }
-
-                GithubWidgetStat {
-                    icon: ""
-                    iconColor: Theme.cyan
-                    category: "Forks:"
-                    value: root.totalForks
-                }
-
-                GithubWidgetStat {
-                    icon: ""
-                    iconColor: Theme.purple
-                    category: "Followers:"
-                    value: root.followers
-                }
-
-                GithubWidgetStat {
-                    icon: ""
-                    iconColor: Theme.blue
-                    category: "Lang:"
-                    value: root.topLanguage
-                }
-
-            }
-
-            Rectangle {
-                width: 1
-                Layout.fillHeight: true
-                color: Theme.border
-                opacity: 0.5
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: 6
-
-                GithubWidgetStat {
-                    icon: ""
-                    iconColor: Theme.pink
-                    category: root.hasToken ? "Public:" : "Repos:"
-                    value: root.publicRepos
-                }
-
-                GithubWidgetStat {
-                    visible: root.hasToken
-                    icon: ""
-                    iconColor: Theme.red
-                    category: "Private:"
-                    value: root.privateRepos
-                }
-
-                GithubWidgetStat {
-                    visible: root.hasToken
-                    icon: ""
-                    iconColor: Theme.orange
-                    category: "Commits:"
-                    value: root.totalCommits
-                }
-
-                GithubWidgetStat {
-                    icon: "󰸗"
-                    iconColor: Theme.green
-                    category: "Joined:"
-                    value: root.joinedDate
-                }
-
+            font {
+                italic: true
+                pixelSize: Constants.sizeSm
             }
 
         }
@@ -235,47 +195,220 @@ Card {
             Layout.fillWidth: true
             height: 1
             color: Theme.border
-            opacity: 0.5
         }
 
-        GithubWidgetStat {
-            icon: "󰓎"
-            iconColor: Theme.yellow
-            category: "Top:"
-            value: root.topRepoName.replace(/^.*\//, "") + " (" + root.topRepoStars + " ⭐)"
+        ColumnLayout {
+            id: statsLayout
+
+            Layout.fillWidth: true
+            spacing: Constants.sizeXs
+
+            InfoRow {
+                visible: GithubService.hasToken
+                icon: "commit"
+                label: "Total Commits"
+                value: String(root.totalCommits)
+            }
+
+            InfoRow {
+                icon: "star"
+                label: "Total Stars"
+                value: String(root.totalStars)
+            }
+
+            InfoRow {
+                icon: "code"
+                label: "Repositories"
+                value: String(root.publicRepos + (GithubService.hasToken ? root.privateRepos : 0))
+            }
+
+            InfoRow {
+                icon: "fork"
+                label: "Total Forks"
+                value: String(root.totalForks)
+            }
+
+        }
+
+        Card {
+            Layout.fillWidth: true
+            backgroundColor: Theme.bgSecondary
+            contentPadding: Constants.sizeMd
+            visible: root.topRepoName !== "..." && root.topRepoName !== "None"
+            scale: repoHover.hovered ? 1.02 : 1
+            radius: Constants.sizeSm
+            useBorder: false
+
+            TapHandler {
+                onTapped: Qt.openUrlExternally("https://github.com/" + root.username + "/" + root.topRepoName)
+            }
+
+            HoverHandler {
+                id: repoHover
+
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Constants.sizeXs
+
+                    SvgIcon {
+                        icon: "star-filled"
+                        flat: true
+                        iconColor: Theme.accent
+                        iconSize: Constants.sizeSm + 2
+                    }
+
+                    ThemedText {
+                        text: root.topRepoName.replace(/^.*\//, "")
+                        font.pixelSize: Constants.sizeSm
+                        font.bold: true
+                        color: Theme.fg
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                    }
+
+                }
+
+                ThemedText {
+                    visible: root.topRepoDesc !== ""
+                    text: root.topRepoDesc
+                    font.pixelSize: Constants.sizeXs + 2
+                    color: Theme.muted
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 2
+                    spacing: Constants.sizeMd
+
+                    RowLayout {
+                        spacing: 4
+                        visible: root.topRepoLang !== ""
+
+                        Rectangle {
+                            width: 6
+                            height: 6
+                            radius: 3
+                            color: Theme.accent
+                        }
+
+                        ThemedText {
+                            text: root.topRepoLang
+                            font.pixelSize: Constants.sizeXs + 2
+                            color: Theme.muted
+                        }
+
+                    }
+
+                    RowLayout {
+                        spacing: 4
+                        visible: root.topRepoStars > 0
+
+                        SvgIcon {
+                            icon: "star"
+                            flat: true
+                            iconColor: Theme.accent
+                            iconSize: Constants.sizeXs + 2
+                        }
+
+                        ThemedText {
+                            text: String(root.topRepoStars)
+                            font.pixelSize: Constants.sizeXs + 2
+                            color: Theme.muted
+                        }
+
+                    }
+
+                    RowLayout {
+                        spacing: 4
+                        visible: root.topRepoForks > 0
+
+                        SvgIcon {
+                            icon: "fork"
+                            flat: true
+                            iconColor: Theme.accent
+                            iconSize: Constants.sizeXs + 2
+                        }
+
+                        ThemedText {
+                            text: String(root.topRepoForks)
+                            font.pixelSize: Constants.sizeXs + 2
+                            color: Theme.muted
+                        }
+
+                    }
+
+                }
+
+            }
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Constants.animFast
+                    easing.type: Easing.OutQuad
+                }
+
+            }
+
         }
 
     }
 
     ColumnLayout {
+        id: errorLayout
+
         anchors.fill: parent
         anchors.margins: Constants.sizeLg
         visible: root.username === ""
         spacing: Constants.sizeSm
 
-        ThemedText {
-            text: "GitHub Stats"
-            color: Theme.purple
-            font.pixelSize: Constants.sizeSm + 1
-            font.weight: Font.Bold
-        }
-
         Item {
             Layout.fillHeight: true
         }
 
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            width: 64
+            height: 64
+            radius: width / 2
+            color: Theme.bgSecondary
+
+            SvgIcon {
+                anchors.centerIn: parent
+                icon: "github"
+                iconSize: Constants.size4Xl
+                flat: true
+                iconColor: Theme.accent
+            }
+
+        }
+
+        Item {
+            Layout.preferredHeight: Constants.sizeXs
+        }
+
         ThemedText {
-            text: "⚠️ Username Required"
-            color: Theme.red
-            font.pixelSize: Constants.sizeSm
-            font.weight: Font.Bold
+            text: "Username Required"
+            color: Theme.fg
+            font.pixelSize: Constants.sizeMd
+            font.bold: true
             Layout.alignment: Qt.AlignHCenter
         }
 
         ThemedText {
-            text: "Configure your username in\nCore/GithubConfig.qml"
+            text: "Configure your GitHub username in settings to view your statistics."
             color: Theme.muted
-            font.pixelSize: Constants.sizeSm - 1
+            font.pixelSize: Constants.sizeSm
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
@@ -283,50 +416,20 @@ Card {
         }
 
         Item {
+            Layout.preferredHeight: Constants.sizeXs
+        }
+
+        ThemedButton {
+            text: "Configure"
+            Layout.alignment: Qt.AlignHCenter
+            onClicked: {
+                AppState.pendingSettingsTab = 5;
+                AppState.openPopup("minflair_settings");
+            }
+        }
+
+        Item {
             Layout.fillHeight: true
-        }
-
-    }
-
-    Timer {
-        interval: 600000
-        running: root.username !== ""
-        repeat: true
-        onTriggered: {
-            fetchProfile.running = true;
-            fetchRepos.running = true;
-            if (root.hasToken)
-                fetchTotalCommits.running = true;
-
-        }
-    }
-
-    component GithubWidgetStat: RowLayout {
-        property string icon
-        property color iconColor: Theme.fg
-        property string category
-        property string value
-
-        spacing: Constants.sizeXs
-
-        ThemedText {
-            text: icon
-            color: iconColor
-            font.pixelSize: Constants.sizeSm - 1
-        }
-
-        ThemedText {
-            text: category
-            color: Theme.muted
-            font.pixelSize: Constants.sizeSm - 1
-        }
-
-        ThemedText {
-            text: String(value)
-            color: Theme.fg
-            font.pixelSize: Constants.sizeSm - 1
-            font.weight: Font.Medium
-            Layout.fillWidth: true
         }
 
     }

@@ -1,29 +1,27 @@
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.Core
+import qs.Core.Components
 
-Rectangle {
+Item {
     id: itemRoot
 
     property var trayItem: null
-    property bool showTooltip: true
 
     signal clicked(var mouse)
 
-    width: 24
-    height: 24
-    color: "transparent"
+    implicitWidth: iconImage.width
+    implicitHeight: iconImage.height
 
     IconImage {
         id: iconImage
 
         anchors.centerIn: parent
-        width: 24
-        height: 24
+        width: Constants.sizeLg
+        height: Constants.sizeLg
         source: {
             if (!itemRoot.trayItem)
                 return "";
@@ -63,28 +61,6 @@ Rectangle {
 
             itemRoot.clicked(mouse);
         }
-    }
-
-    QQC2.ToolTip {
-        id: toolTip
-
-        visible: !!(mouseArea.containsMouse && itemRoot.showTooltip && itemRoot.trayItem && itemRoot.trayItem.title)
-        text: (itemRoot.trayItem && itemRoot.trayItem.title) ? itemRoot.trayItem.title : ""
-        delay: 500
-        y: parent.height + 5
-        padding: Constants.sizeXs
-
-        contentItem: ThemedText {
-            text: toolTip.text
-            font.pixelSize: Constants.sizeSm
-        }
-
-        background: Rectangle {
-            color: Theme.bg
-            border.color: Theme.border
-            radius: Constants.sizeXs
-        }
-
     }
 
 }

@@ -2,6 +2,5 @@ import QtQuick
 import qs.Core
 
 BarButton {
-    text: widget && widget.isOpen ? "" : ""
-    textColor: Theme.orange
+    icon: widget && widget.isOpen ? "chevron-up" : "chevron-down"
 }

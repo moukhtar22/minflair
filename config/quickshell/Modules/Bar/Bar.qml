@@ -1,51 +1,37 @@
+import "Components"
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
+import Quickshell.Services.SystemTray
 import qs.Core
-import qs.Modules.Bar.Components
-import qs.Modules.Bar.Widgets.Calendar
-import qs.Modules.Bar.Widgets.KeyboardLayout
-import qs.Modules.Bar.Widgets.MainPanel
-import qs.Modules.Bar.Widgets.NotificationCenter
-import qs.Modules.Bar.Widgets.PowerMenu
-import qs.Modules.Bar.Widgets.QuickSettings
-import qs.Modules.Bar.Widgets.SystemTray
+import qs.Core.Components
+import qs.Core.Services
+import qs.Modules.Bar.Widgets.SystemTray as STray
 
-PanelWindow {
+Item {
     id: mainBar
 
     required property var notificationService
-
-    implicitHeight: 48
-    color: "transparent"
-
-    anchors {
-        top: true
-        left: true
-        right: true
-    }
-
-    margins {
-        top: 8
-        bottom: 0
-        left: 8
-        right: 8
-    }
+    required property var mainPanelWidget
+    required property var systemTrayRef
 
     Rectangle {
+        id: barContent
+
         anchors.fill: parent
         color: Theme.bg
-        radius: 22
+        radius: Constants.size2Xl
 
         RowLayout {
+            id: hLeftGroup
+
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            spacing: Constants.sizeXs
-            anchors.leftMargin: 8
+            spacing: Constants.sizeLg
+            anchors.leftMargin: 16
 
-            ArchButton {
-                widget: mainPanel
+            MinflairButton {
+                widget: mainBar.mainPanelWidget
             }
 
             Workspaces {
@@ -53,112 +39,60 @@ PanelWindow {
 
         }
 
-        ActiveWindow {
+        ClockButton {
+            id: centerClock
+
             anchors.centerIn: parent
         }
 
         RowLayout {
+            id: hRightGroup
+
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            spacing: Constants.sizeXs
-            anchors.rightMargin: 8
+            spacing: Constants.sizeLg
+            anchors.rightMargin: 16
 
-            BatteryIndicator {
+            ControlCenterButton {
                 notificationService: mainBar.notificationService
             }
 
-            ClockButton {
-                widget: calendar
-            }
+            RowLayout {
+                spacing: Constants.sizeXs
 
-            KeyboardLayoutButton {
-                widget: keyboardLayout
-            }
+                Repeater {
+                    model: SystemTray.items
 
-            QuickSettingsButton {
-                widget: quickSettings
-            }
+                    delegate: STray.TrayItem {
+                        trayItem: modelData
+                        onClicked: (mouse) => {
+                            if (mouse.button === Qt.RightButton || mouse.button === Qt.LeftButton) {
+                                if (modelData.menu) {
+                                    if (mainBar.systemTrayRef.isOpen && mainBar.systemTrayRef.currentTrayItem === modelData) {
+                                        mainBar.systemTrayRef.isOpen = false;
+                                    } else {
+                                        mainBar.systemTrayRef.currentTrayItem = modelData;
+                                        mainBar.systemTrayRef.isOpen = true;
+                                    }
+                                } else if (mouse.button === Qt.LeftButton)
+                                    modelData.activate();
+                                else if (modelData.secondaryActivate && mouse.button === Qt.RightButton)
+                                    modelData.secondaryActivate();
+                            }
+                        }
+                    }
 
-            NotificationsButton {
-                notificationService: mainBar.notificationService
-                widget: notificationCenter
-            }
+                }
 
-            SystemTrayButton {
-                widget: systemTray
             }
 
             PowerButton {
-                widget: powerMenu
+                popupId: "powerMenu"
             }
 
         }
 
-    }
-
-    MainPanel {
-        id: mainPanel
-
-        popupId: "dashboard"
-        anchor.window: mainBar
-        anchor.rect.x: (mainBar.width / 2) - (implicitWidth / 2)
-        anchor.rect.y: mainBar.height
-    }
-
-    Calendar {
-        id: calendar
-
-        popupId: "calendar"
-        anchor.window: mainBar
-        anchor.rect.x: mainBar.width - implicitWidth - 190
-        anchor.rect.y: mainBar.height
-    }
-
-    KeyboardLayout {
-        id: keyboardLayout
-
-        popupId: "keyboardLayout"
-        anchor.window: mainBar
-        anchor.rect.x: mainBar.width - implicitWidth - 165
-        anchor.rect.y: mainBar.height
-    }
-
-    QuickSettings {
-        id: quickSettings
-
-        popupId: "quickSettings"
-        anchor.window: mainBar
-        anchor.rect.x: mainBar.width - implicitWidth - 15
-        anchor.rect.y: mainBar.height
-    }
-
-    NotificationCenter {
-        id: notificationCenter
-
-        notificationService: mainBar.notificationService
-        popupId: "notificationCenter"
-        anchor.window: mainBar
-        anchor.rect.x: mainBar.width - implicitWidth - 15
-        anchor.rect.y: mainBar.height
-    }
-
-    SystemTray {
-        id: systemTray
-
-        popupId: "systemTray"
-        anchor.window: mainBar
-        anchor.rect.x: mainBar.width - implicitWidth - 15
-        anchor.rect.y: mainBar.height
-    }
-
-    PowerMenu {
-        id: powerMenu
-
-        popupId: "powerMenu"
-        anchor.window: mainBar
-        anchor.rect.x: mainBar.width - implicitWidth - 15
-        anchor.rect.y: mainBar.height
     }
 
 }

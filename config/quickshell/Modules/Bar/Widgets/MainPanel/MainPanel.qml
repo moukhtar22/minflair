@@ -5,6 +5,9 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.Core
+import qs.Core.Components
+import qs.Core.Windows
+import qs.Modules.Bar.Widgets.MainPanel.ActivityWatch as MainPanelActivityWatch
 import qs.Modules.Bar.Widgets.MainPanel.Dashboard as MainPanelDashboard
 import qs.Modules.Bar.Widgets.MainPanel.Performance as MainPanelPerformance
 
@@ -12,183 +15,122 @@ TopPopup {
     id: mainPanelPopup
 
     property int activeTab: 0
+    property int slideDistance: 100
 
-    onIsOpenChanged: {
-        if (isOpen)
-            activeTab = 0;
+    Connections {
+        function onVisibleChanged() {
+            if (mainPanelPopup.visible)
+                mainPanelPopup.activeTab = 0;
 
+        }
+
+        function on_WindowVisibleChanged() {
+            if (mainPanelPopup._windowVisible)
+                mainPanelPopup.activeTab = 0;
+
+        }
+
+        target: mainPanelPopup
     }
 
     ColumnLayout {
         id: mainLayout
 
-        implicitWidth: 760
+        implicitWidth: {
+            if (mainPanelPopup.activeTab === 0)
+                return dashboardTab.implicitWidth;
+            else if (mainPanelPopup.activeTab === 1)
+                return performanceTab.implicitWidth;
+            else if (mainPanelPopup.activeTab === 2)
+                return activityWatchTab.implicitWidth;
+            return 800;
+        }
         spacing: Constants.sizeLg
 
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 48
+        ThemedTabs {
+            id: headerRowItem
 
-            Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: 1
-                color: Theme.border
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.size5Xl
+            activeValue: mainPanelPopup.activeTab
+            onTabSelected: (value) => {
+                return mainPanelPopup.activeTab = value;
             }
 
-            RowLayout {
-                anchors.fill: parent
-                spacing: 0
+            ThemedTab {
+                glyph: mainPanelPopup.activeTab === 0 ? "dashboard-filled" : "dashboard"
+                text: "Dashboard"
+                value: 0
+            }
 
-                TabButton {
-                    tabIcon: "󱂬"
-                    tabText: "Dashboard"
-                    isActive: mainPanelPopup.activeTab === 0
-                    onClicked: mainPanelPopup.activeTab = 0
-                }
+            ThemedTab {
+                glyph: mainPanelPopup.activeTab === 1 ? "performance-filled" : "performance"
+                text: "Performance"
+                value: 1
+            }
 
-                TabButton {
-                    tabIcon: "󰓅"
-                    tabText: "Performance"
-                    isActive: mainPanelPopup.activeTab === 1
-                    onClicked: mainPanelPopup.activeTab = 1
-                }
-
+            ThemedTab {
+                glyph: mainPanelPopup.activeTab === 2 ? "leaderboard-filled" : "leaderboard"
+                text: "Activity"
+                value: 2
             }
 
         }
 
         Item {
+            id: tabContainer
+
             Layout.fillWidth: true
-            implicitWidth: 760
-            implicitHeight: 330
+            implicitWidth: mainLayout.implicitWidth
+            implicitHeight: {
+                let h = 330;
+                if (mainPanelPopup.activeTab === 0)
+                    h = dashboardTab.implicitHeight;
+                else if (mainPanelPopup.activeTab === 1)
+                    h = performanceTab.implicitHeight;
+                else if (mainPanelPopup.activeTab === 2)
+                    h = activityWatchTab.implicitHeight;
+                return h > 0 ? h : 330;
+            }
+            clip: true
 
-            MainPanelDashboard.Dashboard {
-                id: dashboardTabContent
+            TabItem {
+                id: dashboardTab
 
-                widget: mainPanelPopup
-                visible: opacity > 0.01
-                opacity: mainPanelPopup.activeTab === 0 ? 1 : 0
-                anchors.fill: parent
+                index: 0
 
-                transform: Translate {
-                    x: mainPanelPopup.activeTab === 0 ? 0 : -30
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Constants.animNormal
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                        easing.type: Easing.OutCubic
-                    }
-
+                MainPanelDashboard.Dashboard {
+                    anchors.fill: parent
+                    widget: mainPanelPopup
                 }
 
             }
 
-            MainPanelPerformance.Performance {
-                id: performanceTabContent
+            TabItem {
+                id: performanceTab
 
-                visible: opacity > 0.01
-                opacity: mainPanelPopup.activeTab === 1 ? 1 : 0
-                anchors.fill: parent
+                index: 1
 
-                transform: Translate {
-                    x: mainPanelPopup.activeTab === 1 ? 0 : 30
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Constants.animNormal
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Constants.animNormal
-                        easing.type: Easing.OutCubic
-                    }
-
+                MainPanelPerformance.Performance {
+                    anchors.fill: parent
                 }
 
             }
 
-        }
+            TabItem {
+                id: activityWatchTab
 
-    }
+                index: 2
 
-    component TabButton: Item {
-        id: tabBtn
-
-        property string tabIcon: ""
-        property string tabText: ""
-        property bool isActive: false
-
-        signal clicked()
-
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-
-        RowLayout {
-            anchors.centerIn: parent
-            spacing: Constants.sizeSm
-
-            ThemedText {
-                text: tabBtn.tabIcon
-                font.pixelSize: Constants.sizeMd + 2
-                color: tabBtn.isActive ? Theme.purple : (hoverHandler.hovered ? Theme.fg : Theme.muted)
-                Layout.alignment: Qt.AlignVCenter
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Constants.animFast
-                    }
-
+                MainPanelActivityWatch.ActivityWatch {
+                    anchors.fill: parent
                 }
 
             }
 
-            ThemedText {
-                text: tabBtn.tabText
-                font.pixelSize: Constants.sizeSm
-                font.weight: tabBtn.isActive ? Font.Bold : Font.Normal
-                color: tabBtn.isActive ? Theme.purple : (hoverHandler.hovered ? Theme.fg : Theme.muted)
-                Layout.alignment: Qt.AlignVCenter
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Constants.animFast
-                    }
-
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: tabBtn.isActive ? 100 : 0
-            height: 3
-            radius: 1.5
-            color: Theme.purple
-
-            Behavior on width {
+            Behavior on implicitHeight {
                 NumberAnimation {
-                    duration: Constants.animFast
+                    duration: Constants.animNormal
                     easing.type: Easing.OutCubic
                 }
 
@@ -196,14 +138,46 @@ TopPopup {
 
         }
 
-        HoverHandler {
-            id: hoverHandler
+    }
 
-            cursorShape: Qt.PointingHandCursor
+    component TabItem: Item {
+        id: tabItemRoot
+
+        property int index
+        default property alias content: container.children
+
+        implicitWidth: container.children.length > 0 ? container.children[0].implicitWidth : 0
+        implicitHeight: container.children.length > 0 ? container.children[0].implicitHeight : 330
+        visible: mainPanelPopup.activeTab === index || opacity > 0.01
+        enabled: mainPanelPopup.activeTab === index
+        opacity: mainPanelPopup.activeTab === index ? 1 : 0
+        anchors.fill: parent
+
+        Item {
+            id: container
+
+            anchors.fill: parent
         }
 
-        TapHandler {
-            onTapped: tabBtn.clicked()
+        transform: Translate {
+            x: (index - mainPanelPopup.activeTab) * mainPanelPopup.slideDistance
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Constants.animNormal
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Constants.animNormal
+                easing.type: Easing.OutCubic
+            }
+
         }
 
     }

@@ -1,65 +1,59 @@
 import QtQuick
+import QtQuick.Layouts
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
 
 Rectangle {
+    id: root
+
     property var widget
-    property alias text: layoutText.text
-    property alias mouseArea: mouseArea
-    property color textColor: Theme.fg
-    property int horizontalPadding: Constants.sizeLg
+    property string popupId: ""
+    property string icon: ""
+    property int iconSize: Constants.sizeLg
     property int fontSize: Constants.sizeSm
-    property bool isButton: true
-    property color bgColor: Theme.bgSecondary
-    property color hoverColor: textColor
+    property color iconColor: Theme.fg
 
-    color: {
-        if (!isButton || hoverColor.a === 0)
-            return bgColor;
-
-        if (mouseArea.containsPress)
-            return bgColor.a === 0 ? Qt.rgba(textColor.r, textColor.g, textColor.b, 0.05) : Qt.tint(bgColor, Qt.rgba(textColor.r, textColor.g, textColor.b, 0.05));
-        else if (mouseArea.containsMouse)
-            return bgColor.a === 0 ? Qt.rgba(textColor.r, textColor.g, textColor.b, 0.1) : Qt.tint(bgColor, Qt.rgba(textColor.r, textColor.g, textColor.b, 0.1));
-        return bgColor;
-    }
-    scale: isButton && mouseArea.containsPress ? 0.95 : 1
     radius: Constants.sizeLg
-    implicitWidth: layoutText.implicitWidth + (horizontalPadding * 2)
-    implicitHeight: 32
+    implicitWidth: svgIcon.implicitWidth
 
-    ThemedText {
-        id: layoutText
+    SvgIcon {
+        id: svgIcon
 
         anchors.centerIn: parent
-        color: textColor
-        font.pixelSize: fontSize
-        font.bold: true
-    }
+        icon: root.icon
+        iconSize: root.iconSize
+        flat: true
+        scale: mouseArea.pressed ? 0.9 : (mouseArea.containsMouse ? 1.1 : 1)
+        iconColor: mouseArea.containsMouse ? Theme.accent : root.iconColor
 
-    MouseArea {
-        id: mouseArea
+        MouseArea {
+            id: mouseArea
 
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: isButton ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: {
-            if (widget)
-                widget.isOpen = !widget.isOpen;
-
-        }
-    }
-
-    Behavior on color {
-        ColorAnimation {
-            duration: Constants.animNormal
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (widget)
+                    widget.isOpen = !widget.isOpen;
+                else if (popupId !== "")
+                    AppState.togglePopup(popupId);
+            }
         }
 
-    }
+        Behavior on scale {
+            NumberAnimation {
+                duration: Constants.animFast
+                easing.type: Easing.OutQuad
+            }
 
-    Behavior on scale {
-        NumberAnimation {
-            duration: Constants.animFast
-            easing.type: Easing.OutBack
+        }
+
+        Behavior on iconColor {
+            ColorAnimation {
+                duration: Constants.animFast
+            }
+
         }
 
     }

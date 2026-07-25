@@ -138,9 +138,7 @@ alias update='sudo pacman -Syu --noconfirm && yay -Syu --noconfirm'
 #  ┴ ┴└─┘ ┴ └─┘  └─┘ ┴ ┴ ┴┴└─ ┴ 
 
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
-export BROWSER=brave
 eval "$(starship init zsh)"
 eval "$(fnm env --use-on-cd --shell zsh)"
 
 # pokemon-colorscripts -r --no-title
-pokemon-colorscripts -n gengar --no-title

@@ -1,224 +1,191 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Io
+import Quickshell
 import qs.Core
+import qs.Core.Components
+import qs.Core.Services
 
 Card {
     id: root
 
-    property string pacmanUpdates: "..."
-    property string aurUpdates: "..."
+    readonly property string pacmanUpdates: UpdateService.pacmanUpdatesCount
+    readonly property string aurUpdates: UpdateService.aurUpdatesCount
     property bool hasUpdates: (parseInt(pacmanUpdates) > 0 || parseInt(aurUpdates) > 0)
-    property bool isSystemUpdating: false
-    readonly property bool isChecking: pacmanProc.running || aurProc.running
-    readonly property bool isUpdating: updateExec.running || isSystemUpdating || AppState.isSystemUpdating
+    readonly property bool isChecking: UpdateService.isCheckingUpdates
+    readonly property bool isUpdating: UpdateService.isSystemUpdating
 
     function runUpdate() {
-        AppState.packageManagerMode = "update";
+        SettingsService.packageManagerMode = "update";
         AppState.openPopup("packagemanager");
     }
 
-    clickable: root.hasUpdates && !root.isUpdating
-    highlighted: root.hasUpdates && !root.isUpdating
-    scaleOnPress: root.hasUpdates && !root.isUpdating
-    cursorShape: root.hasUpdates && !root.isUpdating ? Qt.PointingHandCursor : Qt.ArrowCursor
-    onClicked: {
-        root.runUpdate();
-    }
-    implicitWidth: mainLayout.implicitWidth + (Constants.sizeLg * 2)
-    implicitHeight: mainLayout.implicitHeight + (Constants.sizeLg * 2)
-    Component.onCompleted: {
-        checkLockProc.running = true;
-    }
-
-    Process {
-        id: pacmanProc
-
-        command: ["sh", "-c", "checkupdates | wc -l || echo 0"]
-
-        stdout: SplitParser {
-            onRead: (data) => {
-                root.pacmanUpdates = data.trim();
-            }
-        }
-
-    }
-
-    Process {
-        id: aurProc
-
-        command: ["sh", "-c", "yay -Qua | wc -l || echo 0"]
-
-        stdout: SplitParser {
-            onRead: (data) => {
-                root.aurUpdates = data.trim();
-            }
-        }
-
-    }
-
-    Process {
-        id: updateExec
-
-        command: ["sh", "-c", "kitty --class kitty-floating --hold -e yay -Syu --noconfirm"]
-        onExited: {
-            pacmanProc.running = false;
-            pacmanProc.running = true;
-            aurProc.running = false;
-            aurProc.running = true;
-        }
-    }
-
-    Process {
-        id: checkLockProc
-
-        command: ["test", "-f", "/var/lib/pacman/db.lck"]
-        onExited: (code) => {
-            root.isSystemUpdating = (code === 0);
-        }
-    }
-
-    Timer {
-        id: lockCheckTimer
-
-        interval: 3000
-        running: true
-        repeat: true
-        onTriggered: {
-            checkLockProc.running = true;
-        }
-    }
-
-    Timer {
-        id: hourlyUpdateTimer
-
-        interval: 3.6e+06
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            pacmanProc.running = false;
-            pacmanProc.running = true;
-            aurProc.running = false;
-            aurProc.running = true;
-        }
-    }
-
-    Connections {
-        function onIsSystemUpdatingChanged() {
-            if (!AppState.isSystemUpdating) {
-                root.pacmanUpdates = "...";
-                root.aurUpdates = "...";
-                checkDelayTimer.start();
-            }
-        }
-
-        target: AppState
-    }
-
-    Timer {
-        id: checkDelayTimer
-
-        interval: 800
-        repeat: false
-        onTriggered: {
-            pacmanProc.running = false;
-            pacmanProc.running = true;
-            aurProc.running = false;
-            aurProc.running = true;
-        }
-    }
-
-    RowLayout {
-        id: mainLayout
-
+    ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Constants.sizeLg
-        spacing: Constants.sizeLg
+        spacing: Constants.sizeSm
 
-        Item {
-            id: iconContainer
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeSm
 
-            Layout.preferredWidth: 48
-            Layout.preferredHeight: 48
-            Layout.alignment: Qt.AlignVCenter
+            ThemedText {
+                text: "System Updates"
+                font.pixelSize: Constants.sizeMd
+                font.bold: true
+                color: Theme.fg
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
 
             Rectangle {
-                anchors.fill: parent
-                radius: 24
-                color: Theme.bg
-                opacity: 0.5
-            }
+                visible: root.hasUpdates && !root.isUpdating && !root.isChecking
+                color: Theme.bgSecondary
+                radius: height / 2
+                implicitWidth: updateCountText.implicitWidth + 12
+                implicitHeight: 18
 
-            ThemedText {
-                id: statusIcon
+                ThemedText {
+                    id: updateCountText
 
-                anchors.centerIn: parent
-                text: {
-                    if (root.isUpdating || root.isChecking)
-                        return "󰑐";
-
-                    return root.hasUpdates ? "󰚰" : "󰄬";
-                }
-                font.pixelSize: 24
-                color: {
-                    if (root.isUpdating)
-                        return Theme.yellow;
-
-                    if (root.isChecking)
-                        return Theme.muted;
-
-                    return root.hasUpdates ? Theme.purple : Theme.green;
-                }
-
-                RotationAnimation on rotation {
-                    from: 0
-                    to: 360
-                    duration: 1000
-                    loops: Animation.Infinite
-                    running: root.isUpdating || root.isChecking
-                    onRunningChanged: {
-                        if (!running)
-                            statusIcon.rotation = 0;
-
+                    anchors.centerIn: parent
+                    text: {
+                        let total = (parseInt(root.pacmanUpdates) || 0) + (parseInt(root.aurUpdates) || 0);
+                        return total + " NEW";
                     }
+                    font.pixelSize: Constants.sizeXs
+                    font.bold: true
+                    color: Theme.accent
                 }
 
             }
 
         }
 
-        ColumnLayout {
+        Rectangle {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            spacing: Constants.sizeXs
+            height: 1
+            color: Theme.border
+        }
 
-            ThemedText {
-                text: root.hasUpdates ? "System Updates" : "System Status"
-                font.pixelSize: Constants.sizeSm
-                color: Theme.muted
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeMd
+
+            RowLayout {
+                spacing: Constants.sizeSm
+                Layout.fillWidth: true
+
+                SvgIcon {
+                    id: statusIcon
+
+                    icon: {
+                        if (root.isUpdating || root.isChecking)
+                            return "reload";
+
+                        return root.hasUpdates ? "update" : "check";
+                    }
+                    flat: true
+                    iconColor: {
+                        if (root.isUpdating)
+                            return Theme.accent;
+
+                        if (root.isChecking)
+                            return Theme.muted;
+
+                        return Theme.accent;
+                    }
+
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: 1000
+                        loops: Animation.Infinite
+                        running: root.isUpdating || root.isChecking
+                        onRunningChanged: {
+                            if (!running)
+                                statusIcon.rotation = 0;
+
+                        }
+                    }
+
+                }
+
+                ColumnLayout {
+                    spacing: 2
+                    Layout.fillWidth: true
+
+                    ThemedText {
+                        text: {
+                            if (root.isUpdating)
+                                return "Updating system...";
+
+                            if (root.isChecking)
+                                return "Checking updates...";
+
+                            if (root.pacmanUpdates === "..." || root.aurUpdates === "...")
+                                return "Checking updates...";
+
+                            let total = (parseInt(root.pacmanUpdates) || 0) + (parseInt(root.aurUpdates) || 0);
+                            return total > 0 ? total + " packages pending" : "System up to date";
+                        }
+                        font.pixelSize: Constants.sizeSm
+                        font.bold: true
+                        color: Theme.fg
+                    }
+
+                    ThemedText {
+                        text: {
+                            if (root.isUpdating || root.isChecking || root.pacmanUpdates === "...")
+                                return "Please wait";
+
+                            let total = (parseInt(root.pacmanUpdates) || 0) + (parseInt(root.aurUpdates) || 0);
+                            if (total > 0)
+                                return "Pacman: " + root.pacmanUpdates + " | AUR: " + root.aurUpdates;
+
+                            return "All packages are currently up to date";
+                        }
+                        font.pixelSize: Constants.sizeXs
+                        color: Theme.muted
+                    }
+
+                }
+
+            }
+
+            Item {
                 Layout.fillWidth: true
             }
 
-            ThemedText {
-                text: {
-                    if (root.isUpdating)
-                        return "Updating...";
+            ThemedButton {
+                id: updateButton
 
-                    if (root.isChecking)
-                        return "Checking...";
-
-                    if (root.pacmanUpdates === "..." || root.aurUpdates === "...")
-                        return "Checking...";
-
-                    let total = (parseInt(root.pacmanUpdates) || 0) + (parseInt(root.aurUpdates) || 0);
-                    return total > 0 ? total + " updates" : "Up to date";
+                text: root.hasUpdates && !root.isUpdating ? "Update" : "Check"
+                onClicked: {
+                    if (root.hasUpdates && !root.isUpdating)
+                        root.runUpdate();
+                    else
+                        UpdateService.checkUpdates();
                 }
-                font.pixelSize: Constants.sizeSm
-                font.weight: Font.Bold
-                color: root.isUpdating ? Theme.yellow : (root.hasUpdates ? Theme.purple : Theme.green)
-                elide: Text.ElideRight
-                Layout.fillWidth: true
+
+                SequentialAnimation on scale {
+                    running: root.hasUpdates && !root.isUpdating
+                    loops: Animation.Infinite
+
+                    PropertyAnimation {
+                        to: 1.04
+                        duration: 800
+                        easing.type: Easing.InOutQuad
+                    }
+
+                    PropertyAnimation {
+                        to: 1
+                        duration: 800
+                        easing.type: Easing.InOutQuad
+                    }
+
+                }
+
             }
 
         }

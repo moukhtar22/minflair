@@ -3,14 +3,17 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
 import qs.Core
+import qs.Core.Services
 
 BarButton {
     id: root
 
-    implicitWidth: layout.implicitWidth + 24
+    implicitWidth: hLayout.implicitWidth + 24
+    implicitHeight: 32
+    color: Theme.bgSecondary
 
     RowLayout {
-        id: layout
+        id: hLayout
 
         anchors.centerIn: parent
         spacing: Constants.sizeSm
@@ -19,7 +22,7 @@ BarButton {
             model: 10
 
             Rectangle {
-                id: wsItem
+                id: wsItemH
 
                 readonly property int wsId: index + 1
                 readonly property var workspace: Hyprland.workspaces.values.find((ws) => {
@@ -31,16 +34,17 @@ BarButton {
                 Layout.preferredWidth: isActive ? 28 : (hasWindows ? 10 : 8)
                 Layout.preferredHeight: isActive ? 10 : (hasWindows ? 10 : 8)
                 radius: isActive ? 5 : (hasWindows ? 5 : 4)
-                color: isActive ? Theme.yellow : (hasWindows ? Theme.cyan : (mouseArea.containsMouse ? Theme.fg : Theme.muted))
+                color: mouseAreaH.containsMouse ? Theme.accent : (isActive ? Theme.fg : (hasWindows ? Theme.fg : Theme.muted))
+                scale: mouseAreaH.pressed ? 0.9 : (mouseAreaH.containsMouse ? 1.1 : 1)
 
                 MouseArea {
-                    id: mouseArea
+                    id: mouseAreaH
 
                     anchors.fill: parent
                     anchors.margins: -12
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Hyprland.dispatch("workspace " + wsId)
+                    onClicked: Hyprland.dispatch('hl.dsp.focus({workspace=' + wsId + '})')
                 }
 
                 Behavior on Layout.preferredWidth {
@@ -61,7 +65,15 @@ BarButton {
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Constants.animSlow
+                        duration: Constants.animFast
+                    }
+
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Constants.animFast
+                        easing.type: Easing.OutQuad
                     }
 
                 }
