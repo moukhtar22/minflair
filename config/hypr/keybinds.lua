@@ -30,8 +30,10 @@ hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exit())
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_lockScreen"))
 -- # Toggle Floating Mode
 hl.bind(mainMod .. " + W", hl.dsp.window.float({ action = "toggle" }))
--- # Toggle Fullscreen
-hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
+-- # Toggle Maximize Window
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
+-- # Toggle True Fullscreen
+hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 -- # Pseudo Tiling Layout
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 -- # Toggle Split Direction

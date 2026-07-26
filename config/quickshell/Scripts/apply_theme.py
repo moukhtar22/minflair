@@ -190,14 +190,16 @@ color16 {bgSecondary}
     gtk4_colors = ":root {\n"
     for k, v in mapping.items():
         gtk4_colors += f"  --{k}: {sanitize_color(v)};\n"
-    gtk4_colors += "}\n\nselection,\n:selected {\n  background-color: var(--accent) !important;\n  color: var(--bg) !important;\n}\n"
-    gtk4_colors += "\n.background,\niconview:not(:selected),\n.view:not(:selected) {\n  color: var(--on_surface) !important;\n}\n"
+    gtk4_colors += "}\n\nselection,\n:selected {\n  background-color: var(--accent);\n  color: var(--bg);\n}\n"
+    gtk4_colors += "\n.background,\niconview:not(:selected),\n.view:not(:selected) {\n  color: var(--on_surface);\n}\n"
 
     gtk3_colors = ""
     for k, v in mapping.items():
         gtk3_colors += f"@define-color {k} {sanitize_color(v)};\n"
-    gtk3_colors += "\nselection,\n:selected {\n  background-color: @accent !important;\n  color: @bg !important;\n}\n"
-    gtk3_colors += "\n.background,\niconview:not(:selected),\n.view:not(:selected) {\n  color: @on_surface !important;\n}\n"
+    gtk3_colors += (
+        "\nselection,\n:selected {\n  background-color: @accent;\n  color: @bg;\n}\n"
+    )
+    gtk3_colors += "\n.background,\niconview:not(:selected),\n.view:not(:selected) {\n  color: @on_surface;\n}\n"
 
     theme_dir = os.path.join(home, ".themes", "Material-Gnome")
     os.makedirs(os.path.join(theme_dir, "gtk-3.0"), exist_ok=True)
@@ -235,9 +237,7 @@ color16 {bgSecondary}
     os.system(f"gsettings set org.gnome.desktop.interface color-scheme '{gs_val}'")
     os.system("gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita'")
     os.system("gsettings set org.gnome.desktop.interface gtk-theme 'Material-Gnome'")
-    os.system(
-        f"sed -i 's/gtk-application-prefer-dark-theme=.*/gtk-application-prefer-dark-theme={dark_val}/' '{home}/.config/gtk-3.0/settings.ini' '{home}/.config/gtk-4.0/settings.ini' 2>/dev/null"
-    )
+
     os.system(
         f"sed -i 's/^gtk-theme-name=.*/gtk-theme-name=Material-Gnome/' '{home}/.config/gtk-3.0/settings.ini' '{home}/.config/gtk-4.0/settings.ini' 2>/dev/null"
     )
