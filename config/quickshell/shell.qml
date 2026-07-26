@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.SystemTray as QSSysTray
 import Quickshell.Wayland
 import qs.Core
 import qs.Core.Components
@@ -45,6 +46,7 @@ ShellRoot {
     PanelWindow {
         id: barSurface
 
+        property var activeTrayPopup: null
         readonly property int barHeight: 48
         readonly property int barMarginTop: 8
         readonly property int barMarginSide: 8
@@ -67,7 +69,6 @@ ShellRoot {
             z: 1
             notificationService: globalNotificationService
             mainPanelWidget: mainPanel
-            systemTrayRef: systemTray
             x: barSurface.barMarginSide
             y: barSurface.barMarginTop
             width: barSurface.width - barSurface.barMarginSide * 2
@@ -82,12 +83,22 @@ ShellRoot {
             y: barSurface.popupStartY
         }
 
-        SystemTray {
-            id: systemTray
+        Repeater {
+            model: QSSysTray.SystemTray.items
 
-            popupId: "systemTray"
-            x: barSurface.width - implicitWidth - barSurface.barMarginSide
-            y: barSurface.popupStartY
+            SystemTray {
+                popupId: "systemTray_" + index
+                currentTrayItem: modelData
+                x: barSurface.width - implicitWidth - barSurface.barMarginSide
+                y: barSurface.popupStartY
+                onIsOpenChanged: {
+                    if (isOpen)
+                        barSurface.activeTrayPopup = this;
+                    else if (barSurface.activeTrayPopup === this)
+                        barSurface.activeTrayPopup = null;
+                }
+            }
+
         }
 
         mask: Region {
@@ -106,10 +117,10 @@ ShellRoot {
             }
 
             Region {
-                x: systemTray.x
-                y: systemTray.y
-                width: systemTray._visible ? systemTray.implicitWidth : 0
-                height: systemTray._visible ? systemTray.implicitHeight : 0
+                x: barSurface.activeTrayPopup ? barSurface.activeTrayPopup.x : 0
+                y: barSurface.activeTrayPopup ? barSurface.activeTrayPopup.y : 0
+                width: (barSurface.activeTrayPopup && barSurface.activeTrayPopup._visible) ? barSurface.activeTrayPopup.implicitWidth : 0
+                height: (barSurface.activeTrayPopup && barSurface.activeTrayPopup._visible) ? barSurface.activeTrayPopup.implicitHeight : 0
             }
 
         }

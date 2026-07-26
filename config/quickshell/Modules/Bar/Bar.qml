@@ -12,7 +12,6 @@ Item {
 
     required property var notificationService
     required property var mainPanelWidget
-    required property var systemTrayRef
 
     Rectangle {
         id: barContent
@@ -68,14 +67,9 @@ Item {
                         trayItem: modelData
                         onClicked: (mouse) => {
                             if (mouse.button === Qt.RightButton || mouse.button === Qt.LeftButton) {
-                                if (modelData.menu) {
-                                    if (mainBar.systemTrayRef.isOpen && mainBar.systemTrayRef.currentTrayItem === modelData) {
-                                        mainBar.systemTrayRef.isOpen = false;
-                                    } else {
-                                        mainBar.systemTrayRef.currentTrayItem = modelData;
-                                        mainBar.systemTrayRef.isOpen = true;
-                                    }
-                                } else if (mouse.button === Qt.LeftButton)
+                                if (modelData.menu)
+                                    AppState.togglePopup("systemTray_" + index);
+                                else if (mouse.button === Qt.LeftButton)
                                     modelData.activate();
                                 else if (modelData.secondaryActivate && mouse.button === Qt.RightButton)
                                     modelData.secondaryActivate();

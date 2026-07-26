@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Services.SystemTray as QSSysTray
 import Quickshell.Wayland
 import qs.Core
 import qs.Core.Services
@@ -62,7 +63,6 @@ Scope {
             batteryWidgetRef: batteryWidget
             quickSettingsRef: quickSettings
             notificationCenterRef: notificationCenter
-            systemTrayRef: systemTray
             powerMenuRef: powerMenu
             x: barWindow.barMarginSide
             y: barWindow.barMarginTop
@@ -103,12 +103,16 @@ Scope {
             y: barWindow.popupStartY
         }
 
-        SystemTray {
-            id: systemTray
+        Repeater {
+            model: QSSysTray.SystemTray.items
 
-            popupId: "systemTray"
-            x: barWindow.width - implicitWidth - barWindow.barMarginSide
-            y: barWindow.popupStartY
+            SystemTray {
+                popupId: "systemTray_" + index
+                currentTrayItem: modelData
+                x: barWindow.width - implicitWidth - barWindow.barMarginSide
+                y: barWindow.popupStartY
+            }
+
         }
 
         PowerMenu {

@@ -43,6 +43,16 @@ Item {
                 return "";
             }
         }
+        scale: mouseArea.pressed ? 0.9 : (mouseArea.containsMouse ? 1.1 : 1)
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Constants.animFast
+                easing.type: Easing.OutQuad
+            }
+
+        }
+
     }
 
     MouseArea {

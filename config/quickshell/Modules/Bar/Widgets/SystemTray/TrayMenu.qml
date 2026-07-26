@@ -188,6 +188,7 @@ ColumnLayout {
 
                         anchors.fill: parent
                         hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         visible: !modelData.isSeparator && modelData.enabled
                         onClicked: {
                             if (modelData.hasChildren) {

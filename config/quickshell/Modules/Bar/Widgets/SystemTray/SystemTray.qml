@@ -13,7 +13,7 @@ TopPopup {
     property var currentTrayItem: null
 
     contentWidth: Math.max(250, Math.min(trayMenu.implicitWidth, 450))
-    contentHeight: 300
+    contentHeight: Math.min(trayMenu.implicitHeight, 300)
     onIsOpenChanged: {
         if (!isOpen)
             trayMenu.resetToRoot();
@@ -24,27 +24,34 @@ TopPopup {
         id: trayMenu
 
         width: parent.width
-        Layout.preferredHeight: 300
+        Layout.preferredHeight: root.contentHeight
         menuHandle: root.currentTrayItem ? root.currentTrayItem.menu : null
-        title: root.currentTrayItem ? root.currentTrayItem.title : "Menu"
+        title: {
+            let item = root.currentTrayItem;
+            if (!item)
+                return "Menu";
+
+            let t = item.title ? item.title.toString().trim() : "";
+            if (t !== "")
+                return t;
+
+            let tt = item.toolTipTitle ? item.toolTipTitle.toString().trim() : "";
+            if (tt !== "")
+                return tt;
+
+            let id = item.id ? item.id.toString().trim() : "";
+            if (id !== "" && !id.startsWith("org.kde.StatusNotifier")) {
+                let clean = id.replace(/_status_icon_\d+$/i, "");
+                clean = clean.replace(/[-_]/g, " ");
+                clean = clean.split(" ").map((w) => {
+                    return w.charAt(0).toUpperCase() + w.slice(1);
+                }).join(" ");
+                return clean.trim();
+            }
+            return "Menu";
+        }
         onBackRequested: root.isOpen = false
         onCloseRequested: root.isOpen = false
-    }
-
-    Behavior on contentHeight {
-        NumberAnimation {
-            duration: Constants.animNormal
-            easing.type: Easing.OutExpo
-        }
-
-    }
-
-    Behavior on contentWidth {
-        NumberAnimation {
-            duration: Constants.animNormal
-            easing.type: Easing.OutExpo
-        }
-
     }
 
 }
