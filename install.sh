@@ -6,10 +6,17 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
+# Require sudo password upfront and keep it alive
+sudo -v
+while true; do
+  sudo -n true
+  sleep 60
+  kill -0 "$$" || exit
+done 2>/dev/null &
 ERROR_LOG="$HOME/install_errors.log"
 >"$ERROR_LOG"
 exec 3>&2
-exec 2> >(tee /dev/fd/3 | sed -u -r 's/\x1b\[[0-9;]*[mK]//g; s/\r/\n/g' | sed -u 's/^[[:space:]]*//; /^$/d' >>"$ERROR_LOG")
+exec 2> >(tee /dev/fd/3 | sed -u -r 's/\x1b\[[0-9;]*[mK]//g; s/\r/\n/g' | sed -u 's/^[[:space:]]*//; /^$/d' | grep --line-buffered -iE 'error|fail|warn|conflict|fatal' >>"$ERROR_LOG")
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -54,7 +61,7 @@ dependencies=(
   zsh-syntax-highlighting brightnessctl blueman bluez bluez-utils grim slurp cliphist
   fastfetch neovim curl unrar socat qt6-imageformats mpv fnm polkit-gnome ntfs-3g libnotify
   gnome-keyring libsecret awww playerctl ffmpeg exfatprogs dosfstools gvfs-afc power-profiles-daemon
-  sof-firmware kew gamemode python-pam less
+  sof-firmware gamemode python-pam less
 )
 
 sudo pacman -S --needed --noconfirm "${dependencies[@]}" ||
@@ -75,6 +82,7 @@ aur_dependencies=(
   aw-awatcher
   activitywatch-bin
   otf-geist
+  gpu-screen-recorder
 )
 
 yay -S --needed --noconfirm "${aur_dependencies[@]}" ||
@@ -95,14 +103,14 @@ if [ -d "$REPO_DIR/config" ]; then
     dest="$HOME/.config/$rel"
     if [ -e "$dest" ]; then
       mkdir -p "$BACKUP_DIR/config/$(dirname "$rel")"
-      cp -r "$dest" "$BACKUP_DIR/config/$rel"
+      cp -a "$dest" "$BACKUP_DIR/config/$rel"
     fi
   done < <(find "$REPO_DIR/config" -maxdepth 1 -mindepth 1 -print0)
   ok "Conflicting configs backed up to $BACKUP_DIR/config"
 
   # Pass 2: copy new configs
   while IFS= read -r -d '' dir; do
-    cp -r "$dir" "$HOME/.config/"
+    cp -a "$dir" "$HOME/.config/"
   done < <(find "$REPO_DIR/config" -maxdepth 1 -mindepth 1 -print0)
   ok "config/ → ~/.config/"
 else
@@ -119,7 +127,7 @@ if [ -d "$REPO_DIR/home" ]; then
     dest="$HOME/$rel"
     if [ -e "$dest" ]; then
       mkdir -p "$BACKUP_DIR/home/$(dirname "$rel")"
-      cp -r "$dest" "$BACKUP_DIR/home/$rel"
+      cp -a "$dest" "$BACKUP_DIR/home/$rel"
     fi
   done < <(find "$REPO_DIR/home" -maxdepth 1 -mindepth 1 -print0)
   ok "Conflicting home files backed up to $BACKUP_DIR/home"
@@ -129,7 +137,7 @@ if [ -d "$REPO_DIR/home" ]; then
     rel="${file#$REPO_DIR/home/}"
     dest="$HOME/$rel"
     mkdir -p "$HOME/$(dirname "$rel")"
-    cp -r "$file" "$dest"
+    cp -a "$file" "$dest"
   done < <(find "$REPO_DIR/home" -maxdepth 1 -mindepth 1 -print0)
   ok "home/ → ~/"
 else
@@ -140,7 +148,7 @@ fi
 log "Installing Quickshell desktop entries..."
 if [ -d "$REPO_DIR/config/quickshell/Applications" ]; then
   mkdir -p "$HOME/.local/share/applications"
-  cp -r "$REPO_DIR/config/quickshell/Applications/." "$HOME/.local/share/applications/"
+  cp -a "$REPO_DIR/config/quickshell/Applications/." "$HOME/.local/share/applications/"
   ok "Quickshell desktop entries copied to ~/.local/share/applications/"
 else
   warn "config/quickshell/Applications not found, skipping."
@@ -259,4 +267,12 @@ echo -e "${GREEN}║  Installation completed successfully     ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
 log "Backup saved at: $BACKUP_DIR"
-warn "Please reboot your computer for all changes to take effect."
+echo ""
+read -p "$(echo -e "${YELLOW}[?] Do you want to reboot now? [y/N] ${NC}")" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  log "Rebooting system..."
+  sudo reboot
+else
+  warn "Please remember to reboot your computer later for all changes to take effect."
+fi

@@ -285,6 +285,7 @@ return {{
 [palettes.quickshell]
 bg = "{sanitize_color(bg)}"
 accent = "{sanitize_color(accent)}"
+accentcomplementary = "{sanitize_color(accentComplementary)}"
 """
     os.system(f"sed -i '/# --- Quickshell Palette ---/,$d' '{starship_file}'")
     with open(starship_file, "a") as f:

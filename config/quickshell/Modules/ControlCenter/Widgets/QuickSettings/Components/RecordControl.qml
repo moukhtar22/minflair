@@ -10,7 +10,7 @@ SvgIconButton {
     icon: "record-icon"
     iconColor: Recorder.running ? Theme.accent : Theme.muted
     iconSize: Constants.sizeXl
-    onClicked: {
+    onClicked: function(mouse) {
         if (mouse.button === Qt.RightButton)
             Recorder.toggle(["-s", "-r"]);
         else
