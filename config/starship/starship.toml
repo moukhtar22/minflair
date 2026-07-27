@@ -28,8 +28,3 @@ symbol = "󰘬"
 truncation_length = 13
 truncation_symbol = ""
 format = "[](bold fg:accent)[$symbol $branch(:$remote_branch)](fg:bg bg:accent)[ ](bold fg:accent)"
-
-# --- Quickshell Palette ---
-[palettes.quickshell]
-bg = "#09080c"
-accent = "#9b55dc"
