@@ -233,6 +233,7 @@ color16 {bgSecondary}
     gs_val = "prefer-dark" if is_dark else "prefer-light"
     opp_val = "prefer-light" if is_dark else "prefer-dark"
     dark_val = "1" if is_dark else "0"
+
     os.system(f"gsettings set org.gnome.desktop.interface color-scheme '{opp_val}'")
     os.system(f"gsettings set org.gnome.desktop.interface color-scheme '{gs_val}'")
     os.system("gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita'")
@@ -244,6 +245,23 @@ color16 {bgSecondary}
     os.system(
         f"sed -i 's/^Net\\/ThemeName.*/Net\\/ThemeName \"Material-Gnome\"/' '{home}/.config/xsettingsd/xsettingsd.conf' 2>/dev/null"
     )
+    import configparser
+
+    for qtct in ["qt5ct", "qt6ct"]:
+        qtct_conf = os.path.join(home, ".config", qtct, f"{qtct}.conf")
+        if os.path.exists(qtct_conf):
+            config = configparser.ConfigParser()
+            config.optionxform = str  # Preserve case
+            config.read(qtct_conf)
+            if "Appearance" not in config:
+                config["Appearance"] = {}
+
+            icon_theme = "Papirus-Dark" if is_dark else "Papirus-Light"
+            config["Appearance"]["icon_theme"] = icon_theme
+
+            with open(qtct_conf, "w") as configfile:
+                config.write(configfile)
+
     os.system("killall -HUP xsettingsd 2>/dev/null || true")
 
     # 3. Nvim
@@ -290,6 +308,59 @@ accentcomplementary = "{sanitize_color(accentComplementary)}"
     os.system(f"sed -i '/# --- Quickshell Palette ---/,$d' '{starship_file}'")
     with open(starship_file, "a") as f:
         f.write(toml)
+
+    # 6. Qt (qt5ct / qt6ct)
+    def to_argb(c, alpha="ff"):
+        s = sanitize_color(c)
+        if len(s) == 7:
+            return f"#{alpha}{s[1:]}"
+        return s
+
+    qt_colors = [
+        to_argb(fg),  # 0 WindowText
+        to_argb(bgSecondary),  # 1 Button
+        to_argb(muted),  # 2 Light
+        to_argb(muted),  # 3 Midlight
+        to_argb(bgSecondary),  # 4 Dark
+        to_argb(bgSecondary),  # 5 Mid
+        to_argb(fg),  # 6 Text
+        to_argb(fg),  # 7 BrightText
+        to_argb(fg),  # 8 ButtonText
+        to_argb(bg),  # 9 Base
+        to_argb(bg),  # 10 Window
+        to_argb(shadow),  # 11 Shadow
+        to_argb(accent),  # 12 Highlight
+        to_argb(bg),  # 13 HighlightedText
+        to_argb(accent),  # 14 Link
+        to_argb(accentComplementary),  # 15 LinkVisited
+        to_argb(bgSecondary),  # 16 AlternateBase
+        "#ffffffff",  # 17 NoRole
+        to_argb(bgSecondary),  # 18 ToolTipBase
+        to_argb(fg),  # 19 ToolTipText
+        to_argb(muted, "80"),  # 20 PlaceholderText
+    ]
+
+    qt_colors_str = ", ".join(qt_colors)
+    qt_conf_content = f"[ColorScheme]\nactive_colors={qt_colors_str}\ninactive_colors={qt_colors_str}\ndisabled_colors={qt_colors_str}\n"
+
+    for qtct in ["qt5ct", "qt6ct"]:
+        qt_dir = os.path.join(home, ".config", qtct, "colors")
+        os.makedirs(qt_dir, exist_ok=True)
+        scheme_path = os.path.join(qt_dir, "quickshell.conf")
+        with open(scheme_path, "w") as f:
+            f.write(qt_conf_content)
+
+        qtct_conf = os.path.join(home, ".config", qtct, f"{qtct}.conf")
+        if os.path.exists(qtct_conf):
+            config = configparser.ConfigParser()
+            config.optionxform = str
+            config.read(qtct_conf)
+            if "Appearance" not in config:
+                config["Appearance"] = {}
+            config["Appearance"]["color_scheme_path"] = scheme_path
+            config["Appearance"]["custom_palette"] = "true"
+            with open(qtct_conf, "w") as configfile:
+                config.write(configfile)
 
 
 if __name__ == "__main__":

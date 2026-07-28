@@ -13,6 +13,7 @@ Rectangle {
     property int iconSize: Constants.sizeLg
     property bool isCircle: false
     property bool useOriginalColors: false
+    readonly property int status: iconImage.status
 
     signal clicked(var mouse)
 
@@ -25,7 +26,15 @@ Rectangle {
         id: iconImage
 
         anchors.centerIn: parent
-        source: root.icon ? `${Quickshell.shellDir}/assets/${root.icon}.svg` : ""
+        source: {
+            if (!root.icon)
+                return "";
+
+            if (root.icon.startsWith("image://") || root.icon.startsWith("file://") || root.icon.startsWith("/"))
+                return root.icon;
+
+            return `${Quickshell.shellDir}/assets/${root.icon}.svg`;
+        }
         width: root.iconSize
         height: root.iconSize
         sourceSize.width: root.iconSize
