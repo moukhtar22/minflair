@@ -16,19 +16,36 @@ Item {
     implicitWidth: iconImage.width
     implicitHeight: iconImage.height
 
-    IconImage {
+    SvgIcon {
         id: iconImage
 
         anchors.centerIn: parent
-        width: Constants.sizeLg
-        height: Constants.sizeLg
-        source: {
+        iconSize: Constants.sizeMd
+        useOriginalColors: {
+            if (!itemRoot.trayItem || !itemRoot.trayItem.iconName)
+                return true;
+
+            let name = itemRoot.trayItem.iconName.toLowerCase();
+            if (name.endsWith("-symbolic"))
+                return false;
+
+            let monoIcons = ["blueman", "nm-device", "network-wireless", "network-wired", "audio-volume", "microphone-sensitivity", "battery", "kdeconnect", "cbatticon", "indicator-sound", "indicator-bluetooth", "network-manager", "nm-applet"];
+            for (let i = 0; i < monoIcons.length; i++) {
+                if (name.includes(monoIcons[i]))
+                    return false;
+
+            }
+            return true;
+        }
+        iconColor: Theme.fg
+        flat: true
+        icon: {
             if (!itemRoot.trayItem)
                 return "";
 
             try {
                 if (itemRoot.trayItem.iconName !== undefined && itemRoot.trayItem.iconName !== "")
-                    return "image://icon/" + itemRoot.trayItem.iconName;
+                    return "image://icon/" + itemRoot.trayItem.iconName + "?fallback=false";
 
                 let icon = itemRoot.trayItem.icon;
                 if (!icon)
@@ -38,7 +55,7 @@ Item {
                 if (iconStr.indexOf("://") !== -1 || iconStr.startsWith("/"))
                     return iconStr;
 
-                return "image://icon/" + iconStr;
+                return "image://icon/" + iconStr + "?fallback=false";
             } catch (e) {
                 return "";
             }

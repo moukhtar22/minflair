@@ -61,7 +61,7 @@ dependencies=(
   zsh-syntax-highlighting brightnessctl blueman bluez bluez-utils grim slurp cliphist
   fastfetch neovim curl unrar socat qt6-imageformats mpv fnm polkit-gnome ntfs-3g libnotify
   gnome-keyring libsecret awww playerctl ffmpeg exfatprogs dosfstools gvfs-afc power-profiles-daemon
-  sof-firmware gamemode python-pam less
+  sof-firmware gamemode python-pam less qt6ct papirus-icon-theme
 )
 
 sudo pacman -S --needed --noconfirm "${dependencies[@]}" ||

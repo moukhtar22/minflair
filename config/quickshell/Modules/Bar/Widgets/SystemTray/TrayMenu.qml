@@ -125,24 +125,42 @@ ColumnLayout {
                             Layout.alignment: Qt.AlignVCenter
                             visible: trayIcon.status === Image.Ready
 
-                            IconImage {
+                            SvgIcon {
                                 id: trayIcon
 
-                                anchors.fill: parent
-                                source: {
+                                anchors.centerIn: parent
+                                iconSize: Constants.sizeLg
+                                useOriginalColors: {
+                                    if (!modelData.iconName)
+                                        return true;
+
+                                    let name = modelData.iconName.toLowerCase();
+                                    if (name.endsWith("-symbolic"))
+                                        return false;
+
+                                    let monoIcons = ["blueman", "nm-device", "network-wireless", "network-wired", "audio-volume", "microphone-sensitivity", "battery", "kdeconnect", "cbatticon", "indicator-sound", "indicator-bluetooth", "network-manager", "nm-applet"];
+                                    for (let i = 0; i < monoIcons.length; i++) {
+                                        if (name.includes(monoIcons[i]))
+                                            return false;
+
+                                    }
+                                    return true;
+                                }
+                                iconColor: Theme.fg
+                                icon: {
                                     if (!modelData.icon)
                                         return "";
 
                                     try {
                                         let ic = modelData.icon;
-                                        let icStr = ic.toString();
+                                        let icStr = ic.toString().trim();
                                         if (icStr === "")
                                             return "";
 
                                         if (icStr.indexOf("://") !== -1 || icStr.startsWith("/"))
                                             return icStr;
 
-                                        return "image://icon/" + icStr;
+                                        return "image://icon/" + icStr + "?fallback=false";
                                     } catch (e) {
                                         return "";
                                     }

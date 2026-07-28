@@ -115,7 +115,7 @@ RowLayout {
         let endStr = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 23, 59, 59).toISOString();
         let todayPayload = {
             "timeperiods": [startStr + "/" + endStr],
-            "query": ["window_events = query_bucket(find_bucket(\"aw-watcher-window_\"));", "afk_events = query_bucket(find_bucket(\"aw-watcher-afk_\"));", "not_afk = filter_keyvals(afk_events, \"status\", [\"not-afk\"]);", "final_events = filter_period_intersect(window_events, not_afk);", "merged = merge_events_by_keys(final_events, [\"app\"]);", "RETURN = sort_by_duration(merged);"]
+            "query": ["window_events = query_bucket(find_bucket(\"aw-watcher-window_\"));", "merged = merge_events_by_keys(window_events, [\"app\"]);", "RETURN = sort_by_duration(merged);"]
         };
         fetchAWStats.command = ["curl", "-s", "-f", "-X", "POST", "-H", "Content-Type: application/json", "-d", JSON.stringify(todayPayload), "http://localhost:5600/api/0/query/"];
         root.awResponseRaw = "";
@@ -137,7 +137,7 @@ RowLayout {
         root.weeklyLabels = labels;
         let weeklyPayload = {
             "timeperiods": periods,
-            "query": ["window_events = query_bucket(find_bucket(\"aw-watcher-window_\"));", "afk_events = query_bucket(find_bucket(\"aw-watcher-afk_\"));", "not_afk = filter_keyvals(afk_events, \"status\", [\"not-afk\"]);", "final_events = filter_period_intersect(window_events, not_afk);", "RETURN = sum_durations(final_events);"]
+            "query": ["window_events = query_bucket(find_bucket(\"aw-watcher-window_\"));", "RETURN = sum_durations(window_events);"]
         };
         fetchHourlyStats.command = ["curl", "-s", "-f", "-X", "POST", "-H", "Content-Type: application/json", "-d", JSON.stringify(weeklyPayload), "http://localhost:5600/api/0/query/"];
         root.awHourlyResponseRaw = "";
@@ -199,8 +199,7 @@ RowLayout {
         onExited: (code) => {
             if (code === 0) {
                 try {
-                    let text = root.awResponseRaw.trim();
-                    root.awResponseRaw = "";
+                    let text = awOutput.text.trim();
                     if (text === "")
                         return ;
 
@@ -209,18 +208,23 @@ RowLayout {
                         root.isOnline = true;
                         let events = result[0];
                         let sum = 0;
-                        let appsList = [];
+                        let validEvents = [];
                         for (let i = 0; i < events.length; i++) {
-                            sum += events[i].duration;
+                            let appName = events[i].data.app ? events[i].data.app.toLowerCase() : "unknown";
+                            if (appName !== "unknown") {
+                                sum += events[i].duration;
+                                validEvents.push(events[i]);
+                            }
                         }
                         root.totalTimeSec = Math.round(sum);
                         root.totalTimeStr = formatDuration(sum);
-                        let count = Math.min(events.length, 5);
+                        let count = Math.min(validEvents.length, 5);
+                        let appsList = [];
                         for (let i = 0; i < count; i++) {
-                            let ev = events[i];
+                            let ev = validEvents[i];
                             let pct = sum > 0 ? (ev.duration / sum) : 0;
                             appsList.push({
-                                "app": ev.data.app || "Unknown",
+                                "app": ev.data.app,
                                 "durationStr": formatDuration(ev.duration),
                                 "percentage": pct
                             });
@@ -233,6 +237,7 @@ RowLayout {
                         root.topApps = [];
                     }
                 } catch (e) {
+                    console.error("fetchAWStats error: " + e);
                     root.isOnline = false;
                 }
             } else {
@@ -241,10 +246,8 @@ RowLayout {
             }
         }
 
-        stdout: SplitParser {
-            onRead: (data) => {
-                root.awResponseRaw += data;
-            }
+        stdout: StdioCollector {
+            id: awOutput
         }
 
     }
@@ -255,8 +258,7 @@ RowLayout {
         onExited: (code) => {
             if (code === 0) {
                 try {
-                    let text = root.awHourlyResponseRaw.trim();
-                    root.awHourlyResponseRaw = "";
+                    let text = awHourlyOutput.text.trim();
                     if (text === "")
                         return ;
 
@@ -272,16 +274,15 @@ RowLayout {
                         root.maxWeeklySeconds = Math.round(maxVal);
                     }
                 } catch (e) {
+                    console.error("fetchHourlyStats error: " + e);
                 }
             } else {
                 root.awHourlyResponseRaw = "";
             }
         }
 
-        stdout: SplitParser {
-            onRead: (data) => {
-                root.awHourlyResponseRaw += data;
-            }
+        stdout: StdioCollector {
+            id: awHourlyOutput
         }
 
     }
