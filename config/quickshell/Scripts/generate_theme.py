@@ -104,11 +104,64 @@ def main():
         print(f"Error: image not found: {image_path}")
         sys.exit(1)
 
+    processing_path = image_path
+    magick_path = image_path
+    
+    ext = os.path.splitext(image_path)[1].lower()
+    if ext in ['.gif', '.webp']:
+        # Cache the extracted frame persistently in ~/.cache/quickshell/frames/
+        # so subsequent runs with the same wallpaper skip extraction entirely.
+        home = os.path.expanduser("~")
+        frames_dir = os.path.join(home, ".cache", "quickshell", "frames")
+        os.makedirs(frames_dir, exist_ok=True)
+        base_name = os.path.basename(image_path)
+        cached_frame = os.path.join(frames_dir, base_name + ".jpg")
+
+        # Only re-extract if the cache doesn't exist or is older than the source
+        need_extract = True
+        if os.path.exists(cached_frame):
+            src_mtime = os.path.getmtime(image_path)
+            cache_mtime = os.path.getmtime(cached_frame)
+            if cache_mtime >= src_mtime:
+                need_extract = False
+
+        if need_extract:
+            try:
+                # Use GdkPixbuf to load only the first frame of the animation.
+                # Unlike magick[0] which decompresses ALL frames (10GB+ RAM),
+                # GdkPixbuf loads just the first frame natively and efficiently.
+                # ffmpeg also doesn't work — it can't decode animated WebP at all.
+                import gi
+                gi.require_version('GdkPixbuf', '2.0')
+                from gi.repository import GdkPixbuf
+
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
+
+                # Flatten alpha onto black background (matches static image processing)
+                if pixbuf.get_has_alpha():
+                    bg = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, pixbuf.get_width(), pixbuf.get_height())
+                    bg.fill(0x000000FF)
+                    pixbuf.composite(bg, 0, 0, pixbuf.get_width(), pixbuf.get_height(), 0, 0, 1.0, 1.0, GdkPixbuf.InterpType.BILINEAR, 255)
+                    pixbuf = bg
+
+                pixbuf.savev(cached_frame, "jpeg", ["quality"], ["90"])
+            except Exception as e:
+                print("Warning: GdkPixbuf frame extraction failed:", e)
+                cached_frame = None
+
+        if cached_frame and os.path.exists(cached_frame):
+            processing_path = cached_frame
+            magick_path = cached_frame
+        else:
+            print("Warning: no cached frame available, using original file (may use high RAM).")
+            processing_path = image_path
+            magick_path = image_path
+
     # 1. Determine if the wallpaper is dark or light using ImageMagick mean brightness
     try:
         cmd_mean = [
             "magick",
-            image_path + "[0]",
+            magick_path,
             "-background",
             "black",
             "-alpha",
@@ -144,7 +197,7 @@ def main():
 
     # 2. Run wallust with the appropriate palette option
     try:
-        cmd = ["wallust", "run", "-s", "-p", palette, "--print-scheme", image_path]
+        cmd = ["wallust", "run", "-s", "-p", palette, "--print-scheme", processing_path]
         result = subprocess.run(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
         )
@@ -169,7 +222,7 @@ def main():
     try:
         cmd_magick = [
             "magick",
-            image_path + "[0]",
+            magick_path,
             "-background",
             "black",
             "-alpha",
@@ -284,9 +337,9 @@ def main():
         dominant_hue, bg_s, bg_color["l"], bg_s, 0.04 if is_dark else 0.92
     )
 
-    # Monochromatic generation: ONLY use the top 2-3 most frequent colors
+    # Monochromatic generation: ONLY use the top 10 most frequent colors to avoid missing small accents
     sorted_by_pixels = sorted(color_objs, key=lambda c: c["pixels"], reverse=True)
-    top_colors = sorted_by_pixels[:3]
+    top_colors = sorted_by_pixels[:10]
 
     colorful_top = [c for c in top_colors if get_chroma(c) >= 0.08]
     if colorful_top:
@@ -380,6 +433,7 @@ def main():
 
     # Always emit colors to stdout so QML can apply them immediately without a second cat
     print("COLORS:" + json.dumps(wallpaper_generated))
+
 
 
 if __name__ == "__main__":

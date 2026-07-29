@@ -22,20 +22,42 @@ Item {
         anchors.centerIn: parent
         iconSize: Constants.sizeMd
         useOriginalColors: {
-            if (!itemRoot.trayItem || !itemRoot.trayItem.iconName)
+            if (!itemRoot.trayItem)
                 return true;
 
-            let name = itemRoot.trayItem.iconName.toLowerCase();
-            if (name.endsWith("-symbolic"))
-                return false;
+            let identifiers = [];
+            if (itemRoot.trayItem.iconName !== undefined && itemRoot.trayItem.iconName !== null)
+                identifiers.push(itemRoot.trayItem.iconName.toString().toLowerCase());
 
-            let monoIcons = ["blueman", "nm-device", "network-wireless", "network-wired", "audio-volume", "microphone-sensitivity", "battery", "kdeconnect", "cbatticon", "indicator-sound", "indicator-bluetooth", "network-manager", "nm-applet"];
-            for (let i = 0; i < monoIcons.length; i++) {
-                if (name.includes(monoIcons[i]))
+            if (itemRoot.trayItem.id !== undefined && itemRoot.trayItem.id !== null)
+                identifiers.push(itemRoot.trayItem.id.toString().toLowerCase());
+
+            if (itemRoot.trayItem.title !== undefined && itemRoot.trayItem.title !== null)
+                identifiers.push(itemRoot.trayItem.title.toString().toLowerCase());
+
+            let identString = identifiers.join(" ");
+            let colorIcons = ["youtube", "discord", "spotify", "slack", "telegram", "whatsapp", "skype", "steam", "obs", "vlc", "chrome", "firefox", "brave", "edge", "vesktop", "webcord"];
+            for (let i = 0; i < colorIcons.length; i++) {
+                if (identString.includes(colorIcons[i]))
+                    return true;
+
+            }
+            for (let i = 0; i < identifiers.length; i++) {
+                let n = identifiers[i];
+                if (n.endsWith("-symbolic") || n.endsWith("-tray") || n.endsWith("-panel") || n.endsWith("-indicator"))
                     return false;
 
             }
-            return true;
+            let monoIcons = ["blueman", "nm-device", "network-wireless", "network-wired", "audio-volume", "microphone-sensitivity", "battery", "kdeconnect", "cbatticon", "indicator-sound", "indicator-bluetooth", "network-manager", "nm-applet", "volume", "mic", "network", "bluetooth", "wifi", "sound"];
+            for (let i = 0; i < monoIcons.length; i++) {
+                if (identString.includes(monoIcons[i]))
+                    return false;
+
+            }
+            if (itemRoot.trayItem.category === "SystemServices" || itemRoot.trayItem.category === "Hardware")
+                return false;
+
+            return false;
         }
         iconColor: Theme.fg
         flat: true

@@ -130,22 +130,7 @@ ColumnLayout {
 
                                 anchors.centerIn: parent
                                 iconSize: Constants.sizeLg
-                                useOriginalColors: {
-                                    if (!modelData.iconName)
-                                        return true;
-
-                                    let name = modelData.iconName.toLowerCase();
-                                    if (name.endsWith("-symbolic"))
-                                        return false;
-
-                                    let monoIcons = ["blueman", "nm-device", "network-wireless", "network-wired", "audio-volume", "microphone-sensitivity", "battery", "kdeconnect", "cbatticon", "indicator-sound", "indicator-bluetooth", "network-manager", "nm-applet"];
-                                    for (let i = 0; i < monoIcons.length; i++) {
-                                        if (name.includes(monoIcons[i]))
-                                            return false;
-
-                                    }
-                                    return true;
-                                }
+                                flat: true
                                 iconColor: Theme.fg
                                 icon: {
                                     if (!modelData.icon)
