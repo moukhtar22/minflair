@@ -43,7 +43,7 @@ Singleton {
     Process {
         id: checkProc
 
-        command: ["pidof", "gpu-screen-recorder"]
+        command: ["pidof", "wf-recorder"]
         onExited: (code) => {
             root.running = (code === 0);
         }

@@ -12,12 +12,12 @@ echo "--- Record started at $(date) ---" >>"$LOG"
 DIR="$HOME/Videos/Recordings"
 mkdir -p "$DIR"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
-FILENAME="$DIR/Recording-${TIMESTAMP}.mp4"
+FILENAME="$DIR/Recording-${TIMESTAMP}.mkv"
 
 # If already running, stop it cleanly
-if pidof gpu-screen-recorder >/dev/null; then
-  echo "gpu-screen-recorder is running, stopping it..." >>"$LOG"
-  killall -SIGINT gpu-screen-recorder
+if pidof wf-recorder >/dev/null; then
+  echo "wf-recorder is running, stopping it..." >>"$LOG"
+  killall -SIGINT wf-recorder
   notify-send "Screen Recorder" "Recording finished and saved to Videos/Recordings"
   exit 0
 fi
@@ -56,12 +56,18 @@ echo "Output: $FILENAME" >>"$LOG"
 
 notify-send "Screen Recorder" "Starting recording..."
 
-# Run gpu-screen-recorder
-if [ "$AUDIO" != "none" ]; then
-  pactl set-source-mute "$AUDIO" false
-  gpu-screen-recorder -w "$MONITOR" $REGION -f 60 -a "$AUDIO" -fallback-cpu-encoding yes -o "$FILENAME" >>"$LOG" 2>&1
+if [ -z "$REGION" ]; then
+  TARGET="-o $MONITOR"
 else
-  gpu-screen-recorder -w "$MONITOR" $REGION -f 60 -fallback-cpu-encoding yes -o "$FILENAME" >>"$LOG" 2>&1
+  TARGET="$REGION"
 fi
 
-echo "gpu-screen-recorder exited with code $?" >>"$LOG"
+# Run wf-recorder
+if [ "$AUDIO" != "none" ]; then
+  pactl set-source-mute "$AUDIO" false
+  wf-recorder $TARGET --audio="$AUDIO" -x yuv420p -p color_range=tv -p color_primaries=bt709 -p color_trc=bt709 -p colorspace=bt709 -c libx264 -f "$FILENAME" >>"$LOG" 2>&1
+else
+  wf-recorder $TARGET -x yuv420p -p color_range=tv -p color_primaries=bt709 -p color_trc=bt709 -p colorspace=bt709 -c libx264 -f "$FILENAME" >>"$LOG" 2>&1
+fi
+
+echo "wf-recorder exited with code $?" >>"$LOG"

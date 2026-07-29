@@ -61,7 +61,7 @@ dependencies=(
   zsh-syntax-highlighting brightnessctl blueman bluez bluez-utils grim slurp cliphist
   fastfetch neovim curl unrar socat qt6-imageformats mpv fnm polkit-gnome ntfs-3g libnotify
   gnome-keyring libsecret awww playerctl ffmpeg exfatprogs dosfstools gvfs-afc power-profiles-daemon
-  sof-firmware gamemode python-pam less qt6ct papirus-icon-theme
+  sof-firmware gamemode python-pam less qt6ct papirus-icon-theme wf-recorder
 )
 
 sudo pacman -S --needed --noconfirm "${dependencies[@]}" ||
@@ -82,7 +82,6 @@ aur_dependencies=(
   aw-awatcher
   activitywatch-bin
   otf-geist
-  gpu-screen-recorder
 )
 
 yay -S --needed --noconfirm "${aur_dependencies[@]}" ||
