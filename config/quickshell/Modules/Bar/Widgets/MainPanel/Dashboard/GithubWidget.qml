@@ -420,7 +420,7 @@ Card {
             text: "Configure"
             Layout.alignment: Qt.AlignHCenter
             onClicked: {
-                AppState.pendingSettingsTab = 5;
+                AppState.pendingSettingsTab = 4;
                 AppState.openPopup("minflair_settings");
             }
         }
