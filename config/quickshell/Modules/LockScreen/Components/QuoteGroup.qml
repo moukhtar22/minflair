@@ -9,7 +9,7 @@ ColumnLayout {
     Text {
         text: "“" + QuoteService.currentQuote.text + "”"
         font.family: Constants.fontFamily
-        font.pixelSize: Constants.sizeSm
+        font.pixelSize: Constants.sizeMd
         font.italic: true
         color: Theme.muted
         horizontalAlignment: Text.AlignRight
@@ -21,7 +21,7 @@ ColumnLayout {
     Text {
         text: "— " + QuoteService.currentQuote.author.toUpperCase()
         font.family: Constants.fontFamily
-        font.pixelSize: Constants.sizeXs
+        font.pixelSize: Constants.sizeXs + 2
         color: Theme.muted
         font.letterSpacing: 2
         Layout.alignment: Qt.AlignRight

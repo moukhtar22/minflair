@@ -7,24 +7,41 @@ RowLayout {
     spacing: Constants.sizeMd
 
     Text {
-        text: SystemStats.username
+        text: "CPU " + Math.round(SystemStats.cpuUsage) + "%"
         font.family: Constants.fontFamily
         font.pixelSize: Constants.sizeSm
         color: Theme.muted
+        font.letterSpacing: 1
     }
 
     Rectangle {
-        width: Constants.size2Xl
+        width: Constants.sizeXl
         height: 2
         color: Theme.accent
         Layout.alignment: Qt.AlignVCenter
     }
 
     Text {
-        text: SystemStats.hostname
+        text: "RAM " + SystemStats.memUsed.toFixed(1) + "G"
         font.family: Constants.fontFamily
         font.pixelSize: Constants.sizeSm
         color: Theme.muted
+        font.letterSpacing: 1
+    }
+
+    Rectangle {
+        width: Constants.sizeXl
+        height: 2
+        color: Theme.accent
+        Layout.alignment: Qt.AlignVCenter
+    }
+
+    Text {
+        text: "UP " + SystemStats.uptime
+        font.family: Constants.fontFamily
+        font.pixelSize: Constants.sizeSm
+        color: Theme.muted
+        font.letterSpacing: 1
     }
 
 }
