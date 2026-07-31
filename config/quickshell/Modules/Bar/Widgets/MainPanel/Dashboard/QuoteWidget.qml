@@ -61,11 +61,7 @@ Item {
         interval: Constants.animFast
         repeat: false
         onTriggered: {
-            let nextIndex = QuoteService.currentQuoteIndex;
-            if (QuoteService.quotes.length > 1) {
-                while (nextIndex === QuoteService.currentQuoteIndex)nextIndex = Math.floor(Math.random() * QuoteService.quotes.length)
-            }
-            QuoteService.currentQuoteIndex = nextIndex;
+            QuoteService.generateRandomQuote();
             root.state = "visible";
         }
     }

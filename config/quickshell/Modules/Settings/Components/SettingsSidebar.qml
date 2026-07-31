@@ -10,7 +10,7 @@ import qs.Core.Services
 Rectangle {
     id: sidebarRoot
 
-    property int activeTab: 6
+    property int activeTab: 1
     property bool appearanceCollapsed: false
     property bool generalCollapsed: false
     property bool systemCollapsed: false
@@ -388,6 +388,12 @@ Rectangle {
                 "icon": "code",
                 "section": "general"
             }, {
+                "type": "item",
+                "index": 5,
+                "label": "Quotes",
+                "icon": "quote",
+                "section": "general"
+            }, {
                 "type": "separator",
                 "section": "general"
             }, {
@@ -396,13 +402,13 @@ Rectangle {
                 "section": "system"
             }, {
                 "type": "item",
-                "index": 5,
+                "index": 6,
                 "label": "System",
                 "icon": "info",
                 "section": "system"
             }, {
                 "type": "item",
-                "index": 6,
+                "index": 7,
                 "label": "Updates",
                 "icon": "refresh",
                 "section": "system"
