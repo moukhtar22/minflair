@@ -23,6 +23,12 @@ Card {
         command: ["sh", "-c", "exec cava -p ~/.config/quickshell/Modules/Bar/Widgets/MainPanel/Dashboard/cava.conf"]
         running: MprisService.isPlaying
 
+        onRunningChanged: {
+            if (!running) {
+                root.cavaData = [];
+            }
+        }
+
         stdout: SplitParser {
             onRead: (data) => {
                 let parts = data.split(";");
