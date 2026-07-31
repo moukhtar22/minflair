@@ -2,12 +2,9 @@ import QtQuick
 pragma Singleton
 
 QtObject {
-    property int currentQuoteIndex: Math.floor(Math.random() * quotes.length)
+    property var categories: ["All"]
+    property string currentCategory: SettingsService.quoteCategory
     property var quotes: [{
-        "text": "The only way to do great work is to love what you do.",
-        "author": "Steve Jobs",
-        "category": "Inspiration"
-    }, {
         "text": "Waste no more time arguing about what a good man should be. Be one.",
         "author": "Marcus Aurelius",
         "category": "Philosophy"
@@ -24,14 +21,6 @@ QtObject {
         "author": "John Lennon",
         "category": "Life"
     }, {
-        "text": "The secret of change is to focus all of your energy, not on fighting the old, but on building the new.",
-        "author": "Socrates",
-        "category": "Wisdom"
-    }, {
-        "text": "Do not go where the path may lead, go instead where there is no path and leave a trail.",
-        "author": "Ralph Waldo Emerson",
-        "category": "Inspiration"
-    }, {
         "text": "It is not that we have a short time to live, but that we waste a lot of it.",
         "author": "Seneca",
         "category": "Philosophy"
@@ -39,18 +28,6 @@ QtObject {
         "text": "You have power over your mind - not outside events. Realize this, and you will find strength.",
         "author": "Marcus Aurelius",
         "category": "Philosophy"
-    }, {
-        "text": "Quiet minds cannot be perplexed or frightened but go on in fortune or misfortune at their own private pace, like a clock during a thunderstorm.",
-        "author": "Robert Louis Stevenson",
-        "category": "Mindfulness"
-    }, {
-        "text": "The present moment is filled with joy and happiness. If you are attentive, you will see it.",
-        "author": "Thich Nhat Hanh",
-        "category": "Mindfulness"
-    }, {
-        "text": "A journey of a thousand miles begins with a single step.",
-        "author": "Lao Tzu",
-        "category": "Wisdom"
     }, {
         "text": "Talk is cheap. Show me the code.",
         "author": "Linus Torvalds",
@@ -100,49 +77,104 @@ QtObject {
         "author": "Ralph Johnson",
         "category": "Programming"
     }, {
-        "text": "Keep it simple, stupid.",
-        "author": "Kelly Johnson",
-        "category": "Principle"
-    }, {
-        "text": "If it isn't broken, don't fix it.",
-        "author": "Bert Lance",
-        "category": "Principle"
-    }, {
-        "text": "You aren't gonna need it.",
-        "author": "Ron Jeffries",
-        "category": "Principle"
-    }, {
         "text": "Premature optimization is the root of all evil.",
         "author": "Donald Knuth",
         "category": "Programming"
-    }, {
-        "text": "Simple is better than complex.",
-        "author": "Tim Peters",
-        "category": "Principle"
     }, {
         "text": "The function of good software is to make the invisible visible.",
         "author": "Steve McConnell",
         "category": "Programming"
     }, {
-        "text": "Good design is obvious. That's why it's so hard to have good design.",
-        "author": "Jeffrey Zeldman",
-        "category": "Design"
+        "text": "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+        "author": "Martin Fowler",
+        "category": "Programming"
     }, {
-        "text": "Simplicity is the ultimate sophistication.",
-        "author": "Leonardo da Vinci",
-        "category": "Principle"
+        "text": "Truth can only be found in one place: the code.",
+        "author": "Robert C. Martin",
+        "category": "Programming"
     }, {
-        "text": "Design is not just what it looks like and feels like. Design is how it works.",
-        "author": "Steve Jobs",
-        "category": "Design"
+        "text": "Happiness is not an ideal of reason, but of imagination.",
+        "author": "Immanuel Kant",
+        "category": "Philosophy"
     }, {
-        "text": "The goal is to make the user's life easier, not to show off how smart we are.",
-        "author": "Douglas Adams",
-        "category": "Design"
+        "text": "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+        "author": "Aristotle",
+        "category": "Philosophy"
     }, {
-        "text": "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.",
-        "author": "Antoine de Saint-Exupéry",
-        "category": "Principle"
+        "text": "A computer once beat me at chess, but it was no match for me at kick boxing.",
+        "author": "Emo Philips",
+        "category": "Humor"
+    }, {
+        "text": "Youth is happy because it has the capacity to see beauty. Anyone who keeps the ability to see beauty never grows old.",
+        "author": "Franz Kafka",
+        "category": "Life"
+    }, {
+        "text": "By believing passionately in something that still does not exist, we create it.",
+        "author": "Franz Kafka",
+        "category": "Philosophy"
+    }, {
+        "text": "He who has a why to live for can bear almost any how.",
+        "author": "Friedrich Nietzsche",
+        "category": "Philosophy"
+    }, {
+        "text": "And those who were seen dancing were thought to be insane by those who could not hear the music.",
+        "author": "Friedrich Nietzsche",
+        "category": "Philosophy"
+    }, {
+        "text": "My grief counselor died. He was so good, I don’t even care.",
+        "author": "Gary Delaney",
+        "category": "Humor"
+    }, {
+        "text": "Even people who are good for nothing have the capacity to bring a smile to your face, for instance when you push them down the stairs.",
+        "author": "Anonymous",
+        "category": "Humor"
+    }, {
+        "text": "I’ll never forget my Granddad’s last words to me just before he died. 'Are you still holding the ladder?'",
+        "author": "Anonymous",
+        "category": "Humor"
+    }, {
+        "text": "I was playing chess with my friend and he said, 'Let's make this interesting'. So we stopped playing chess.",
+        "author": "Matt Kirshen",
+        "category": "Humor"
     }]
-    readonly property var currentQuote: quotes[currentQuoteIndex]
+    property var currentQuote
+
+    function getCategories() {
+        for (let i = 0; i < quotes.length; i++) {
+            if (!categories.includes(quotes[i].category))
+                categories.push(quotes[i].category);
+
+        }
+    }
+
+    function generateRandomQuote() {
+        let arr = [];
+        for (let i = 0; i < quotes.length; i++) {
+            if (currentCategory === "All" || quotes[i].category === currentCategory)
+                arr.push(quotes[i]);
+
+        }
+        if (arr.length === 0)
+            return ;
+
+        if (arr.length === 1) {
+            currentQuote = arr[0];
+            return ;
+        }
+        let randomIndex = Math.floor(Math.random() * arr.length);
+        let selectedQuote = arr[randomIndex];
+        while (currentQuote && selectedQuote.text === currentQuote.text) {
+            randomIndex = Math.floor(Math.random() * arr.length);
+            selectedQuote = arr[randomIndex];
+        }
+        currentQuote = selectedQuote;
+    }
+
+    Component.onCompleted: {
+        getCategories();
+        generateRandomQuote();
+    }
+    onCurrentCategoryChanged: {
+        generateRandomQuote();
+    }
 }

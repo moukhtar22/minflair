@@ -15,6 +15,7 @@ Item {
     property string musicPlayer: "spotify"
     property string musicPlayerCommand: "spotify"
     property bool isSettingsLoading: settingsLoader.running
+    property string quoteCategory: "All"
 
     function saveSettings() {
         saveTimer.restart();
@@ -50,6 +51,11 @@ Item {
 
     }
     onMusicPlayerCommandChanged: {
+        if (settingsLoaded)
+            saveSettings();
+
+    }
+    onQuoteCategoryChanged: {
         if (settingsLoaded)
             saveSettings();
 
@@ -94,7 +100,8 @@ Item {
                 "hyprGapsIn": HyprlandService.hyprGapsIn,
                 "hyprGapsOut": HyprlandService.hyprGapsOut,
                 "micMuted": AudioService.micMuted,
-                "micVolume": AudioService.micVolume
+                "micVolume": AudioService.micVolume,
+                "quoteCategory": settingsService.quoteCategory
             };
             settingsSaver.command = ["sh", "-c", "mkdir -p ~/.cache/quickshell && cat << 'EOF' > ~/.cache/quickshell/settings_prefs.json\n" + JSON.stringify(data) + "\nEOF"];
             settingsSaver.running = true;
@@ -228,6 +235,9 @@ Item {
                                 AudioService.setMicMuted(prefs.micMuted);
 
                         }
+                        if (prefs.quoteCategory !== undefined)
+                            settingsService.quoteCategory = prefs.quoteCategory;
+
                     } catch (e) {
                         console.error("Error loading settings: " + e);
                         SystemInfoService.applyProfile("balanced");

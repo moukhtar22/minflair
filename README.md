@@ -2,7 +2,7 @@
 
 # Minflair
 
-**Aesthetic Hyprland rice for Arch Linux — dynamic theming, Quickshell widgets, and a polished workflow out of the box.**
+**A custom Hyprland environment for Arch Linux, built around dynamic theming and Quickshell.**
 
 <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784959751/output_ubfvlc.gif" alt="Preview" />
 

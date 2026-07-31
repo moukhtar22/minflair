@@ -217,7 +217,7 @@ Rectangle {
                 spacing: Constants.size3Xs
 
                 Text {
-                    text: GithubService.fullName !== "" ? GithubService.fullName : (SystemStats.username.charAt(0).toUpperCase() + SystemStats.username.slice(1))
+                    text: SystemStats.username
                     font.family: Constants.fontFamily
                     font.pixelSize: Constants.sizeLg
                     font.bold: true
@@ -225,7 +225,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: "@" + (GithubService.username !== "" ? GithubService.username : SystemStats.username)
+                    text: "@" + SystemStats.hostname
                     font.family: Constants.fontFamily
                     font.pixelSize: Constants.sizeSm
                     color: Theme.muted

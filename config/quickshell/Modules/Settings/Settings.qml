@@ -19,7 +19,7 @@ AppWindow {
     property int activeTab: 0
     property int lastTab: 0
     property int animOff: 0
-    property var pageComponents: [appearanceComp, wmComp, inputComp, defaultAppsComp, githubComp, systemComp, updatesComp]
+    property var pageComponents: [appearanceComp, wmComp, inputComp, defaultAppsComp, githubComp, quoteSettingsComp, systemComp, updatesComp]
     property string powerProfile: SystemInfoService.powerProfile
     property string batteryStatus: SystemInfoService.batteryStatus
     property string batteryPercentage: SystemInfoService.batteryPercentage
@@ -209,6 +209,15 @@ AppWindow {
         id: githubComp
 
         ServicesSettings {
+            anchors.fill: parent
+        }
+
+    }
+
+    Component {
+        id: quoteSettingsComp
+
+        QuoteSettings {
             anchors.fill: parent
         }
 

@@ -276,7 +276,7 @@ CenterWindow {
                     anchors.fill: parent
                     anchors.margins: Constants.sizeXs
                     radius: Constants.sizeLg
-                    color: Theme.bgSecondary
+                    color: Theme.border
                     scale: isCurrent || hoverHandler.hovered ? 1.05 : 1
 
                     Rectangle {
@@ -314,7 +314,7 @@ CenterWindow {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         height: nameText.contentHeight + Constants.sizeXs
-                        color: Theme.bgSecondary
+                        color: Theme.bg
                         radius: Constants.sizeLg
 
                         ThemedText {
