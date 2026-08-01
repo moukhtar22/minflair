@@ -12,6 +12,7 @@ Rectangle {
     property string description: ""
     property var model: []
     property int currentIndex: 0
+    property int comboWidth: 160
     property string fallbackText: "Auto"
     property var iconMap: ({
     })
@@ -57,7 +58,7 @@ Rectangle {
 
             z: 10
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-            implicitWidth: 160
+            implicitWidth: root.comboWidth
             implicitHeight: 36
             model: root.model
             currentIndex: root.currentIndex

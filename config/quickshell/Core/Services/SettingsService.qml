@@ -16,6 +16,7 @@ Item {
     property string musicPlayerCommand: "spotify"
     property bool isSettingsLoading: settingsLoader.running
     property string quoteCategory: "All"
+    property string fontFamily: "Geist"
 
     function saveSettings() {
         saveTimer.restart();
@@ -56,6 +57,11 @@ Item {
 
     }
     onQuoteCategoryChanged: {
+        if (settingsLoaded)
+            saveSettings();
+
+    }
+    onFontFamilyChanged: {
         if (settingsLoaded)
             saveSettings();
 
@@ -101,7 +107,8 @@ Item {
                 "hyprGapsOut": HyprlandService.hyprGapsOut,
                 "micMuted": AudioService.micMuted,
                 "micVolume": AudioService.micVolume,
-                "quoteCategory": settingsService.quoteCategory
+                "quoteCategory": settingsService.quoteCategory,
+                "fontFamily": settingsService.fontFamily
             };
             settingsSaver.command = ["sh", "-c", "mkdir -p ~/.cache/quickshell && cat << 'EOF' > ~/.cache/quickshell/settings_prefs.json\n" + JSON.stringify(data) + "\nEOF"];
             settingsSaver.running = true;
@@ -237,6 +244,9 @@ Item {
                         }
                         if (prefs.quoteCategory !== undefined)
                             settingsService.quoteCategory = prefs.quoteCategory;
+
+                        if (prefs.fontFamily !== undefined)
+                            settingsService.fontFamily = prefs.fontFamily;
 
                     } catch (e) {
                         console.error("Error loading settings: " + e);

@@ -13,6 +13,16 @@ SettingContainer {
     id: appearanceRoot
 
     property bool showingDark: true
+    property var availableFonts: []
+    property string currentFontName: "Geist"
+    property int currentFontSize: 11
+
+    function applyFont() {
+        SettingsService.fontFamily = appearanceRoot.currentFontName;
+        setFontProc.command = ["python3", "/home/t4lentles5/.config/quickshell/Scripts/apply_font.py", appearanceRoot.currentFontName, appearanceRoot.currentFontSize.toString()];
+        setFontProc.running = false;
+        setFontProc.running = true;
+    }
 
     scrollable: true
     onShowingDarkChanged: {
@@ -34,6 +44,107 @@ SettingContainer {
         }
 
         target: Theme
+    }
+
+    Process {
+        id: setFontProc
+    }
+
+    Process {
+        id: fetchFontsProc
+
+        command: ["sh", "-c", "fc-list : family | cut -d, -f1 | sort -u"]
+        Component.onCompleted: running = true
+
+        stdout: SplitParser {
+            onRead: (data) => {
+                if (data) {
+                    let lines = data.split('\n').map((x) => {
+                        return x.trim();
+                    }).filter((x) => {
+                        return x !== "";
+                    });
+                    let arr = appearanceRoot.availableFonts.slice();
+                    let changed = false;
+                    lines.forEach((l) => {
+                        if (arr.indexOf(l) === -1) {
+                            arr.push(l);
+                            changed = true;
+                        }
+                    });
+                    if (changed)
+                        appearanceRoot.availableFonts = arr;
+
+                }
+            }
+        }
+
+    }
+
+    Process {
+        id: getFontProc
+
+        command: ["sh", "-c", "gsettings get org.gnome.desktop.interface font-name | tr -d \"'\""]
+        Component.onCompleted: running = true
+
+        stdout: SplitParser {
+            onRead: (data) => {
+                if (data && data.trim() !== "") {
+                    let full = data.trim();
+                    let match = full.match(/(.*)\s+(\d+)$/);
+                    if (match) {
+                        appearanceRoot.currentFontName = match[1];
+                        appearanceRoot.currentFontSize = parseInt(match[2]);
+                    } else {
+                        appearanceRoot.currentFontName = full;
+                        appearanceRoot.currentFontSize = 11;
+                    }
+                    if (appearanceRoot.availableFonts.indexOf(appearanceRoot.currentFontName) === -1) {
+                        let arr = appearanceRoot.availableFonts.slice();
+                        arr.unshift(appearanceRoot.currentFontName);
+                        appearanceRoot.availableFonts = arr;
+                    }
+                }
+            }
+        }
+
+    }
+
+    SettingHeader {
+        title: "System Fonts"
+    }
+
+    SettingGroup {
+        SettingSelect {
+            label: "System Font"
+            description: "Global font for GTK, Qt and Shell"
+            comboWidth: 260
+            model: appearanceRoot.availableFonts
+            currentIndex: {
+                let idx = model.indexOf(appearanceRoot.currentFontName);
+                return idx !== -1 ? idx : 0;
+            }
+            onActivated: (index) => {
+                appearanceRoot.currentFontName = model[index];
+                appearanceRoot.applyFont();
+            }
+        }
+
+        SettingSpinBox {
+            label: "System Font Size"
+            description: "Global font size for GTK and Qt"
+            from: 8
+            to: 24
+            stepSize: 1
+            value: appearanceRoot.currentFontSize
+            suffix: " pt"
+            decimals: 0
+            onMoved: (val) => {
+                appearanceRoot.currentFontSize = Math.round(val);
+                appearanceRoot.applyFont();
+            }
+        }
+
     }
 
     SettingHeader {
@@ -296,7 +407,7 @@ SettingContainer {
 
     ThemedButton {
         Layout.alignment: Qt.AlignRight
-        disabled: !(!HyprlandService.wpEnableTransitions || HyprlandService.wpTransitionType !== "grow" || HyprlandService.wpTransitionStep !== 120 || HyprlandService.wpTransitionPos !== "center" || HyprlandService.wpTransitionFps !== 60 || HyprlandService.wpTransitionAngle !== 30 || HyprlandService.wpAutoShuffle || HyprlandService.wpShuffleInterval !== 10)
+        disabled: !(!HyprlandService.wpEnableTransitions || HyprlandService.wpTransitionType !== "grow" || HyprlandService.wpTransitionStep !== 120 || HyprlandService.wpTransitionPos !== "center" || HyprlandService.wpTransitionFps !== 60 || HyprlandService.wpTransitionAngle !== 30 || HyprlandService.wpAutoShuffle || HyprlandService.wpShuffleInterval !== 10 || appearanceRoot.currentFontName !== "Geist" || appearanceRoot.currentFontSize !== 11)
         text: "Restore Defaults"
         onClicked: {
             HyprlandService.wpEnableTransitions = true;
@@ -307,6 +418,9 @@ SettingContainer {
             HyprlandService.wpTransitionAngle = 30;
             HyprlandService.wpAutoShuffle = false;
             HyprlandService.wpShuffleInterval = 10;
+            appearanceRoot.currentFontName = "Geist";
+            appearanceRoot.currentFontSize = 11;
+            appearanceRoot.applyFont();
         }
     }
 
