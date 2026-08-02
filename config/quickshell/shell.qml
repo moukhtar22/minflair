@@ -29,21 +29,6 @@ ShellRoot {
     }
 
     PanelWindow {
-        id: barExclusionZone
-
-        color: "transparent"
-        implicitWidth: 1
-        implicitHeight: 56
-        anchors.top: true
-        anchors.left: true
-        anchors.right: true
-
-        mask: Region {
-        }
-
-    }
-
-    PanelWindow {
         id: barSurface
 
         property var activeTrayPopup: null
@@ -52,13 +37,13 @@ ShellRoot {
         readonly property int barMarginSide: 8
         readonly property int popupStartY: barMarginTop + barHeight
 
+        WlrLayershell.layer: WlrLayer.Top
         color: "transparent"
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
         focusable: false
+        implicitHeight: 56
 
         anchors {
             top: true
-            bottom: true
             left: true
             right: true
         }
@@ -75,11 +60,38 @@ ShellRoot {
             height: barSurface.barHeight
         }
 
+        mask: Region {
+            Region {
+                x: barSurface.barMarginSide
+                y: barSurface.barMarginTop
+                width: barSurface.width - barSurface.barMarginSide * 2
+                height: barSurface.barHeight
+            }
+
+        }
+
+    }
+
+    PanelWindow {
+        id: popupSurface
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        color: "transparent"
+        focusable: false
+
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
         MainPanel {
             id: mainPanel
 
             popupId: "dashboard"
-            x: (barSurface.width - implicitWidth) / 2
+            x: (popupSurface.width - implicitWidth) / 2
             y: barSurface.popupStartY
         }
 
@@ -89,7 +101,7 @@ ShellRoot {
             SystemTray {
                 popupId: "systemTray_" + index
                 currentTrayItem: modelData
-                x: barSurface.width - implicitWidth - barSurface.barMarginSide
+                x: popupSurface.width - implicitWidth - barSurface.barMarginSide
                 y: barSurface.popupStartY
                 onIsOpenChanged: {
                     if (isOpen)
@@ -102,13 +114,6 @@ ShellRoot {
         }
 
         mask: Region {
-            Region {
-                x: barSurface.barMarginSide
-                y: barSurface.barMarginTop
-                width: barSurface.width - barSurface.barMarginSide * 2
-                height: barSurface.barHeight
-            }
-
             Region {
                 x: mainPanel.x
                 y: mainPanel.y
