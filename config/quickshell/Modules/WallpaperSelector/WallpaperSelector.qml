@@ -301,6 +301,7 @@ CenterWindow {
                             asynchronous: true
                             cache: true
                             sourceSize: Qt.size(400, 300)
+                            mipmap: true
                         }
 
                         layer.effect: OpacityMask {

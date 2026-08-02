@@ -121,6 +121,8 @@ Card {
                         anchors.fill: parent
                         source: (root.avatarUrl || root.username) ? (root.avatarUrl || "https://github.com/identicons/" + root.username + ".png") : ""
                         fillMode: Image.PreserveAspectCrop
+                        sourceSize: Qt.size(88, 88)
+                        mipmap: true
                         visible: false
                         antialiasing: true
                     }

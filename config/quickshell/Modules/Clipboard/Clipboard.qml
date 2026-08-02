@@ -521,6 +521,8 @@ CenterWindow {
                                     source: parent.parent.visible ? "file:///tmp/quickshell-clipboard/" + model.itemId + ".png" : ""
                                     asynchronous: true
                                     fillMode: Image.PreserveAspectFit
+                                    sourceSize: Qt.size(320, 160)
+                                    mipmap: true
                                 }
 
                             }

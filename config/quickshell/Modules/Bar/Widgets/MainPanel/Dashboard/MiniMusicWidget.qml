@@ -126,6 +126,7 @@ Card {
                     anchors.fill: parent
                     source: MprisService.activePlayer ? (MprisService.activePlayer.trackArtUrl || "") : ""
                     fillMode: Image.PreserveAspectCrop
+                    mipmap: true
                     asynchronous: true
                     visible: false
                 }

@@ -288,7 +288,7 @@ Rectangle {
 
                     anchors.fill: parent
                     source: "file:///home/" + SystemStats.username + "/.face"
-                    sourceSize: Qt.size(Constants.size5Xl, Constants.size4Xl)
+                    mipmap: true
                     fillMode: Image.PreserveAspectCrop
                     visible: false
                 }
