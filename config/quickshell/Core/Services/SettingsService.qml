@@ -105,6 +105,10 @@ Item {
                 "hyprBlurPasses": HyprlandService.hyprBlurPasses,
                 "hyprGapsIn": HyprlandService.hyprGapsIn,
                 "hyprGapsOut": HyprlandService.hyprGapsOut,
+                "hyprBorderSize": HyprlandService.hyprBorderSize,
+                "hyprShadow": HyprlandService.hyprShadow,
+                "hyprShadowRange": HyprlandService.hyprShadowRange,
+                "hyprShadowRenderPower": HyprlandService.hyprShadowRenderPower,
                 "micMuted": AudioService.micMuted,
                 "micVolume": AudioService.micVolume,
                 "quoteCategory": settingsService.quoteCategory,
@@ -228,6 +232,18 @@ Item {
 
                         if (prefs.hyprGapsOut !== undefined)
                             HyprlandService.hyprGapsOut = prefs.hyprGapsOut;
+
+                        if (prefs.hyprBorderSize !== undefined)
+                            HyprlandService.hyprBorderSize = prefs.hyprBorderSize;
+
+                        if (prefs.hyprShadow !== undefined)
+                            HyprlandService.hyprShadow = prefs.hyprShadow;
+
+                        if (prefs.hyprShadowRange !== undefined)
+                            HyprlandService.hyprShadowRange = prefs.hyprShadowRange;
+
+                        if (prefs.hyprShadowRenderPower !== undefined)
+                            HyprlandService.hyprShadowRenderPower = prefs.hyprShadowRenderPower;
 
                         HyprlandService.startupAnimations();
                         if (prefs.micVolume !== undefined) {

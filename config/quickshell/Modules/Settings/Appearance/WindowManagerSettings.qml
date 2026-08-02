@@ -20,10 +20,10 @@ SettingContainer {
             SettingSpinBox {
                 label: "Window Rounding"
                 from: 0
-                to: 30
+                to: 40
                 stepSize: 1
                 value: HyprlandService.hyprRounding
-                defaultValue: 16
+                defaultValue: 32
                 suffix: "px"
                 onMoved: (val) => {
                     HyprlandService.hyprRounding = Math.round(val);
@@ -80,6 +80,19 @@ SettingContainer {
                 }
             }
 
+            SettingSpinBox {
+                label: "Border Size"
+                from: 0
+                to: 10
+                stepSize: 1
+                value: HyprlandService.hyprBorderSize
+                defaultValue: 2
+                suffix: "px"
+                onMoved: (val) => {
+                    HyprlandService.hyprBorderSize = Math.round(val);
+                }
+            }
+
         }
 
         SettingToggle {
@@ -130,19 +143,72 @@ SettingContainer {
 
         }
 
+        SettingToggle {
+            id: shadowToggle
+
+            label: "Enable Window Shadows"
+            onCheckedChanged: {
+                if (checked !== HyprlandService.hyprShadow)
+                    HyprlandService.hyprShadow = checked;
+
+            }
+
+            Binding on checked {
+                value: HyprlandService.hyprShadow
+            }
+
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeMd
+            enabled: HyprlandService.hyprShadow
+            opacity: enabled ? 1 : 0.5
+
+            SettingSpinBox {
+                label: "Shadow Range"
+                from: 1
+                to: 40
+                stepSize: 1
+                value: HyprlandService.hyprShadowRange
+                defaultValue: 4
+                suffix: "px"
+                onMoved: (val) => {
+                    HyprlandService.hyprShadowRange = Math.round(val);
+                }
+            }
+
+            SettingSpinBox {
+                label: "Shadow Render Power"
+                from: 1
+                to: 4
+                stepSize: 1
+                value: HyprlandService.hyprShadowRenderPower
+                defaultValue: 3
+                onMoved: (val) => {
+                    HyprlandService.hyprShadowRenderPower = Math.round(val);
+                }
+            }
+
+        }
+
         ThemedButton {
             Layout.alignment: Qt.AlignRight
-            disabled: !(!HyprlandService.hyprBlur || HyprlandService.hyprRounding !== 16 || HyprlandService.hyprActiveOpacity !== 100 || HyprlandService.hyprInactiveOpacity !== 100 || HyprlandService.hyprBlurSize !== 6 || HyprlandService.hyprBlurPasses !== 4 || HyprlandService.hyprGapsIn !== 4 || HyprlandService.hyprGapsOut !== 8)
+            disabled: !(!HyprlandService.hyprBlur || HyprlandService.hyprRounding !== 32 || HyprlandService.hyprActiveOpacity !== 100 || HyprlandService.hyprInactiveOpacity !== 100 || HyprlandService.hyprBlurSize !== 6 || HyprlandService.hyprBlurPasses !== 4 || HyprlandService.hyprGapsIn !== 4 || HyprlandService.hyprGapsOut !== 8 || HyprlandService.hyprBorderSize !== 2 || HyprlandService.hyprShadow || HyprlandService.hyprShadowRange !== 4 || HyprlandService.hyprShadowRenderPower !== 3)
             text: "Restore Defaults"
             onClicked: {
                 HyprlandService.hyprBlur = true;
-                HyprlandService.hyprRounding = 16;
+                HyprlandService.hyprRounding = 32;
                 HyprlandService.hyprActiveOpacity = 100;
                 HyprlandService.hyprInactiveOpacity = 100;
                 HyprlandService.hyprBlurSize = 6;
                 HyprlandService.hyprBlurPasses = 4;
                 HyprlandService.hyprGapsIn = 4;
                 HyprlandService.hyprGapsOut = 8;
+                HyprlandService.hyprBorderSize = 2;
+                HyprlandService.hyprShadow = false;
+                HyprlandService.hyprShadowRange = 4;
+                HyprlandService.hyprShadowRenderPower = 3;
                 Theme.bgOpacity = 1;
                 Theme.saveScheme();
             }
