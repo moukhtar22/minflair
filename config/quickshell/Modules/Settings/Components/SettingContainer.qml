@@ -3,30 +3,24 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Core
 import qs.Core.Components
-import qs.Modules.Settings.Components
 
-Rectangle {
+Item {
     id: root
 
-    property bool scrollable: true
     default property alias content: contentLayout.data
 
-    color: "transparent"
     Layout.fillWidth: true
-    Layout.fillHeight: scrollable
-    implicitHeight: scrollable ? 100 : (mainCard.implicitHeight)
+    Layout.fillHeight: true
 
     Flickable {
         id: flickable
 
+        anchors.fill: parent
+        anchors.margins: Constants.sizeLg
         clip: true
-        interactive: root.scrollable
+        interactive: true
         contentWidth: width
         contentHeight: mainCard.implicitHeight
-
-        anchors {
-            fill: parent
-        }
 
         ColumnLayout {
             id: mainCard
@@ -42,8 +36,11 @@ Rectangle {
 
         }
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AlwaysOff
+        ScrollIndicator.vertical: ScrollIndicator {
+            parent: flickable.parent
+            anchors.top: flickable.top
+            anchors.bottom: flickable.bottom
+            anchors.right: flickable.right
         }
 
     }

@@ -78,7 +78,6 @@ aur_dependencies=(
   tela-circle-icon-theme-dracula-git
   xxhash
   pokemon-colorscripts-git
-  wallust
   aw-awatcher
   activitywatch-bin
   otf-geist

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Core
 import qs.Core.Components
+import qs.Core.Services
 
 Rectangle {
     id: root
@@ -12,12 +13,13 @@ Rectangle {
     property string description: ""
     property var model: []
     property var currentValue
+    property bool isSubSetting: false
 
     signal activated(var value)
 
+    Layout.preferredHeight: mainLayout.implicitHeight
     Layout.fillWidth: true
     color: "transparent"
-    implicitHeight: mainLayout.implicitHeight
 
     RowLayout {
         id: mainLayout

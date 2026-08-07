@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Core
 import qs.Core.Components
+import qs.Core.Services
 
 Rectangle {
     id: root
@@ -19,12 +20,13 @@ Rectangle {
     property int decimals: 0
     property bool allowOff: false
     property string offText: "Off"
+    property bool isSubSetting: false
 
     signal moved(real val)
 
+    Layout.preferredHeight: mainLayout.implicitHeight
     Layout.fillWidth: true
     color: "transparent"
-    implicitHeight: mainLayout.implicitHeight
 
     RowLayout {
         id: mainLayout
@@ -41,6 +43,7 @@ Rectangle {
             ThemedText {
                 text: root.label
                 font.pixelSize: Constants.sizeMd
+                color: root.enabled ? Theme.fg : Theme.muted
             }
 
             ThemedText {
@@ -59,6 +62,7 @@ Rectangle {
         RowLayout {
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             spacing: Constants.sizeMd
+            opacity: root.enabled ? 1 : 0.5
 
             Rectangle {
                 width: Constants.size3Xl
@@ -120,7 +124,7 @@ Rectangle {
                 Layout.preferredWidth: Math.max(64, contentRow.implicitWidth + Constants.sizeLg * 1.5)
                 Layout.preferredHeight: Constants.size3Xl
                 radius: Constants.sizeSm
-                color: "transparent"
+                color: Theme.bgTertiary
                 border.width: 1
                 border.color: valueInput.activeFocus ? Theme.accent : Theme.border
 

@@ -68,105 +68,109 @@ ColumnLayout {
 
     }
 
-    SettingHeader {
+    SettingGroup {
         title: "System Information"
+        icon: "info"
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeSm
+
+            InfoRow {
+                label: "Kernel"
+                value: root.kernel
+            }
+
+            InfoRow {
+                label: "Uptime"
+                value: root.uptimeText
+            }
+
+            InfoRow {
+                label: "Shell"
+                value: root.shell
+            }
+
+            InfoRow {
+                label: "Pacman Packages"
+                value: root.packages
+            }
+
+            InfoRow {
+                label: "AUR Packages"
+                value: root.packagesAur
+            }
+
+            InfoRow {
+                label: "WM / DE"
+                value: "Hyprland"
+            }
+
+        }
+
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Constants.sizeSm
-
-        InfoRow {
-            label: "Kernel"
-            value: root.kernel
-        }
-
-        InfoRow {
-            label: "Uptime"
-            value: root.uptimeText
-        }
-
-        InfoRow {
-            label: "Shell"
-            value: root.shell
-        }
-
-        InfoRow {
-            label: "Pacman Packages"
-            value: root.packages
-        }
-
-        InfoRow {
-            label: "AUR Packages"
-            value: root.packagesAur
-        }
-
-        InfoRow {
-            label: "WM / DE"
-            value: "Hyprland"
-        }
-
-    }
-
-    SettingHeader {
+    SettingGroup {
         title: "Hardware Status"
-    }
+        icon: "cpu"
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Constants.sizeSm
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeSm
 
-        InfoRow {
-            label: "CPU Model"
-            value: root.cpuModel
-        }
+            InfoRow {
+                label: "CPU Model"
+                value: root.cpuModel
+            }
 
-        InfoRow {
-            label: "CPU Config"
-            value: root.cpuCores + " @ " + root.cpuFreq
-        }
+            InfoRow {
+                label: "CPU Config"
+                value: root.cpuCores + " @ " + root.cpuFreq
+            }
 
-        InfoRow {
-            label: "CPU Usage"
-            value: root.cpuUsage.toFixed(0) + "% (" + root.cpuTemp + ")"
-        }
+            InfoRow {
+                label: "CPU Usage"
+                value: root.cpuUsage.toFixed(0) + "% (" + root.cpuTemp + ")"
+            }
 
-        InfoRow {
-            label: "Memory"
-            value: root.memUsed + " / " + root.memTotal + " (" + root.memUsage.toFixed(0) + "%)"
-        }
+            InfoRow {
+                label: "Memory"
+                value: root.memUsed + " / " + root.memTotal + " (" + root.memUsage.toFixed(0) + "%)"
+            }
 
-        InfoRow {
-            label: "Storage /"
-            value: root.diskSizeText + " (" + root.diskUsage + "%)"
-        }
+            InfoRow {
+                label: "Storage /"
+                value: root.diskSizeText + " (" + root.diskUsage + "%)"
+            }
 
-        InfoRow {
-            label: "Load Average"
-            value: root.loadAvg
-        }
+            InfoRow {
+                label: "Load Average"
+                value: root.loadAvg
+            }
 
-        InfoRow {
-            label: "Active Tasks"
-            value: root.tasks.toString()
-        }
+            InfoRow {
+                label: "Active Tasks"
+                value: root.tasks.toString()
+            }
 
-        InfoRow {
-            label: "GPU Model"
-            value: root.gpuName
-            visible: root.gpuName !== "None"
-        }
+            InfoRow {
+                label: "GPU Model"
+                value: root.gpuName
+                visible: root.gpuName !== "None"
+            }
 
-        InfoRow {
-            label: "GPU VRAM"
-            value: root.gpuVram
-            visible: root.gpuName !== "None" && root.gpuVram !== "" && root.gpuVram !== "None"
-        }
+            InfoRow {
+                label: "GPU VRAM"
+                value: root.gpuVram
+                visible: root.gpuName !== "None" && root.gpuVram !== "" && root.gpuVram !== "None"
+            }
 
-        InfoRow {
-            label: "GPU Usage"
-            value: root.gpuUsage + " (" + root.gpuTemp + ")"
-            visible: root.gpuName !== "None"
+            InfoRow {
+                label: "GPU Usage"
+                value: root.gpuUsage + " (" + root.gpuTemp + ")"
+                visible: root.gpuName !== "None"
+            }
+
         }
 
     }

@@ -9,9 +9,6 @@ import qs.Core
 import qs.Core.Components
 import qs.Core.Services
 import qs.Core.Windows
-import qs.Modules.Settings.Appearance
-import qs.Modules.Settings.General
-import qs.Modules.Settings.System
 
 AppWindow {
     id: root
@@ -19,7 +16,7 @@ AppWindow {
     property int activeTab: 0
     property int lastTab: 0
     property int animOff: 0
-    property var pageComponents: [appearanceComp, wmComp, inputComp, defaultAppsComp, githubComp, quoteSettingsComp, systemComp, updatesComp]
+    property var pageComponents: [personalizationComp, effectsComp, windowComp, integrationsComp, systemInputComp]
     property string powerProfile: SystemInfoService.powerProfile
     property string batteryStatus: SystemInfoService.batteryStatus
     property string batteryPercentage: SystemInfoService.batteryPercentage
@@ -27,6 +24,7 @@ AppWindow {
 
     popupId: "minflair_settings"
     windowTitle: "Minflair Settings"
+    contentPadding: 0
     onIsOpenChanged: {
         if (isOpen) {
             if (AppState.pendingSettingsTab !== -1) {
@@ -36,82 +34,6 @@ AppWindow {
                 activeTab = 0;
             }
         }
-    }
-
-    Connections {
-        function onActiveTabChanged() {
-            switchAnim.complete();
-            root.animOff = 40 * (root.activeTab > root.lastTab ? 1 : -1);
-            switchAnim.start();
-            root.lastTab = root.activeTab;
-        }
-
-        target: root
-    }
-
-    SequentialAnimation {
-        id: switchAnim
-
-        NumberAnimation {
-            target: pageLoader
-            property: "opacity"
-            to: 0
-            duration: Constants.animFast
-            easing.type: Easing.InQuad
-        }
-
-        ScriptAction {
-            script: {
-                pageLoader.sourceComponent = root.pageComponents[root.activeTab];
-            }
-        }
-
-        PropertyAction {
-            target: pageLoader
-            property: "anchors.topMargin"
-            value: root.animOff
-        }
-
-        PropertyAction {
-            target: pageLoader
-            property: "anchors.bottomMargin"
-            value: -root.animOff
-        }
-
-        PropertyAction {
-            target: pageLoader
-            property: "scale"
-            value: 0.95
-        }
-
-        ParallelAnimation {
-            NumberAnimation {
-                target: pageLoader
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: Constants.animNormal
-                easing.type: Easing.OutQuint
-            }
-
-            NumberAnimation {
-                target: pageLoader
-                properties: "anchors.topMargin,anchors.bottomMargin"
-                to: 0
-                duration: Constants.animSlow
-                easing.type: Easing.OutBack
-            }
-
-            NumberAnimation {
-                target: pageLoader
-                property: "scale"
-                to: 1
-                duration: Constants.animSlow
-                easing.type: Easing.OutBack
-            }
-
-        }
-
     }
 
     Process {
@@ -170,81 +92,66 @@ AppWindow {
     }
 
     Component {
-        id: appearanceComp
+        id: personalizationComp
 
-        AppearanceSettings {
+        PersonalizationSettings {
             anchors.fill: parent
         }
 
     }
 
     Component {
-        id: wmComp
+        id: effectsComp
 
-        WindowManagerSettings {
+        EffectsSettings {
             anchors.fill: parent
         }
 
     }
 
     Component {
-        id: inputComp
+        id: windowComp
 
-        InputSettings {
+        WindowSettings {
             anchors.fill: parent
         }
 
     }
 
     Component {
-        id: defaultAppsComp
+        id: integrationsComp
 
-        DefaultAppsSettings {
+        IntegrationsSettings {
             anchors.fill: parent
         }
 
     }
 
     Component {
-        id: githubComp
+        id: systemInputComp
 
-        ServicesSettings {
+        SystemInputSettings {
             anchors.fill: parent
         }
 
     }
 
-    Component {
-        id: quoteSettingsComp
-
-        QuoteSettings {
-            anchors.fill: parent
+    Shortcut {
+        sequence: "Tab"
+        onActivated: {
+            root.activeTab = (root.activeTab + 1) % root.pageComponents.length;
         }
-
     }
 
-    Component {
-        id: systemComp
-
-        SystemSettings {
-            anchors.fill: parent
+    Shortcut {
+        sequence: "Shift+Tab"
+        onActivated: {
+            root.activeTab = (root.activeTab - 1 + root.pageComponents.length) % root.pageComponents.length;
         }
-
-    }
-
-    Component {
-        id: updatesComp
-
-        UpdatesSettings {
-            anchors.fill: parent
-        }
-
     }
 
     RowLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        spacing: Constants.sizeLg
+        spacing: 0
 
         SettingsSidebar {
             Layout.fillHeight: true
@@ -255,20 +162,19 @@ AppWindow {
             }
         }
 
-        Divider {
-            vertical: true
-        }
-
-        Item {
+        PageTransitionView {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
+            activeIndex: root.activeTab
+            onContentNeedsUpdate: (index) => {
+                pageLoader.sourceComponent = root.pageComponents[index];
+            }
 
             Loader {
                 id: pageLoader
 
                 anchors.fill: parent
-                sourceComponent: appearanceComp
+                sourceComponent: personalizationComp
             }
 
         }

@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Core.Services
+import qs.Core.Utils
 pragma Singleton
 
 QtObject {
@@ -12,24 +13,16 @@ QtObject {
         "dark": {
             "name": "Default",
             "bg": '#030107',
-            "bgSecondary": '#110b1a',
             "fg": '#d1d1d1',
-            "muted": '#6a6c7e',
-            "border": '#484d6980',
             "accent": '#a77ef5',
-            "accentComplementary": '#f57eb6',
-            "shadow": '#000000'
+            "accentComplementary": '#f57eb6'
         },
         "light": {
             "name": "Default Light",
             "bg": '#e8dbff',
-            "bgSecondary": '#d2bdf7',
             "fg": '#1e1a2e',
-            "muted": '#6b6489',
-            "border": '#6b648980',
             "accent": '#7040e8',
-            "accentComplementary": '#e840a1',
-            "shadow": '#000000'
+            "accentComplementary": '#e840a1'
         }
     }]
     property string currentScheme: "Default"
@@ -37,15 +30,16 @@ QtObject {
     property color _rawBg: themes[0].dark.bg
     property color opaqueBg: _rawBg
     property color bg: Qt.rgba(_rawBg.r, _rawBg.g, _rawBg.b, bgOpacity)
-    property color bgSecondary: Qt.rgba(accent.r, accent.g, accent.b, 0.05)
-    property color bgTertiary: Qt.rgba(accent.r, accent.g, accent.b, 0.1)
+    property bool isDark: ColorUtils.isDark(_rawBg)
+    property color overlayBase: isDark ? Qt.rgba(fg.r * 0.3 + accent.r * 0.7, fg.g * 0.3 + accent.g * 0.7, fg.b * 0.3 + accent.b * 0.7, 1) : accent
+    property color bgSecondary: Qt.rgba(overlayBase.r, overlayBase.g, overlayBase.b, isDark ? 0.05 : 0.1)
+    property color bgTertiary: Qt.rgba(overlayBase.r, overlayBase.g, overlayBase.b, isDark ? 0.1 : 0.2)
     property color fg: themes[0].dark.fg
-    property color muted: themes[0].dark.muted
-    property color border: themes[0].dark.border
+    property color muted: Qt.rgba(fg.r, fg.g, fg.b, 0.65)
+    property color border: Qt.rgba(fg.r, fg.g, fg.b, 0.15)
     property color accent: themes[0].dark.accent
     property color accentComplementary: themes[0].dark.accentComplementary
-    property color _rawShadow: themes[0].dark.shadow
-    property color shadow: Qt.rgba(_rawShadow.r, _rawShadow.g, _rawShadow.b, 0.45)
+    property color shadow: Qt.rgba(0, 0, 0, 0.45)
     property bool generateFromWallpaper: false
     property var wallpaperColors: null
     property Process saver
@@ -61,11 +55,8 @@ QtObject {
         currentScheme = scheme.name;
         _rawBg = scheme.bg;
         fg = scheme.fg;
-        muted = scheme.muted;
-        border = scheme.border || scheme.bg;
         accent = scheme.accent;
         accentComplementary = scheme.accentComplementary;
-        _rawShadow = scheme.shadow || "#000000";
         saveScheme();
     }
 
@@ -196,20 +187,11 @@ QtObject {
                     if (colors.fg)
                         root.fg = colors.fg;
 
-                    if (colors.muted)
-                        root.muted = colors.muted;
-
-                    if (colors.border)
-                        root.border = colors.border;
-
                     if (colors.accent)
                         root.accent = colors.accent;
 
                     if (colors.accentComplementary)
                         root.accentComplementary = colors.accentComplementary;
-
-                    if (colors.shadow)
-                        root._rawShadow = colors.shadow;
 
                     applyThemeProc.running = false;
                     applyThemeProc.command = ["python3", Quickshell.env("HOME") + "/.config/quickshell/Scripts/apply_theme.py"];
