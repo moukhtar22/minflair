@@ -45,7 +45,8 @@ Rectangle {
     ColorOverlay {
         anchors.fill: iconImage
         source: iconImage
-        color: root.iconColor
+        color: Qt.rgba(root.iconColor.r, root.iconColor.g, root.iconColor.b, 1)
+        opacity: root.iconColor.a
         visible: !root.useOriginalColors
     }
 

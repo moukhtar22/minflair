@@ -79,8 +79,8 @@ Item {
                     root.hostname = parts[2];
                     root.cpuModel = parts[3];
                     root.shell = parts[4];
-                    root.packages = parts[5] + " (pacman)";
-                    root.packagesAur = parts[6] + " (AUR)";
+                    root.packages = parts[5];
+                    root.packagesAur = parts[6];
                     root.username = parts[7];
                 }
             }

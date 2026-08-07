@@ -535,24 +535,13 @@ CenterWindow {
 
             }
 
-            ColumnLayout {
+            GhostEmptyState {
                 anchors.centerIn: parent
                 visible: resultsModel.count === 0 && !root.isSearching && !debounceTimer.running && !(root.actionMode === "install" && root.searchText.length < 2)
-
-                SvgIcon {
-                    icon: root.actionMode === "update" ? "check" : "ghost"
-                    iconColor: root.actionMode === "update" ? Theme.accent : Theme.muted
-                    iconSize: 72
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                ThemedText {
-                    text: root.actionMode === "update" ? "System is up to date" : "No packages found"
-                    color: Theme.muted
-                    font.pixelSize: Constants.sizeMd
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
+                icon: root.actionMode === "update" ? "check" : "ghost"
+                iconColor: root.actionMode === "update" ? Theme.accent : Theme.muted
+                text: root.actionMode === "update" ? "System is up to date" : "No packages found"
+                isAnimating: visible && root.actionMode !== "update"
             }
 
             ColumnLayout {

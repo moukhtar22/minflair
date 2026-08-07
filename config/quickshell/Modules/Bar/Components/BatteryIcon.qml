@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Io
 import Quickshell.Services.Notifications
@@ -6,7 +7,7 @@ import qs.Core
 import qs.Core.Components
 import qs.Core.Services
 
-SvgIcon {
+Item {
     id: root
 
     property int batteryLevel: SystemInfoService.batteryLevel
@@ -16,31 +17,13 @@ SvgIcon {
     property string _prevStatus: ""
     property int _prevLevel: -1
     property bool notifiedFull: false
-    property int textOffsetX: -2
-    property int textOffsetY: 1
     property color activeColor: Theme.fg
-    readonly property string batteryIconText: {
-        if (root.batteryStatus === "Charging")
-            return "battery-bolt";
+    property int textOffsetX: 0
+    property int textOffsetY: 0
 
-        if (root.batteryLevel >= 90)
-            return "battery-full";
-
-        if (root.batteryLevel >= 70)
-            return "battery-4";
-
-        if (root.batteryLevel >= 50)
-            return "battery-3";
-
-        if (root.batteryLevel >= 30)
-            return "battery-2";
-
-        if (root.batteryLevel >= 10)
-            return "battery-1";
-
-        return "battery-question";
-    }
-
+    visible: hasBattery
+    implicitWidth: 32
+    implicitHeight: 16
     onBatteryStatusChanged: {
         if (batteryStatus === "" || batteryStatus === _prevStatus)
             return ;
@@ -92,22 +75,72 @@ SvgIcon {
         }
         _prevLevel = batteryLevel;
     }
-    visible: hasBattery
-    icon: root.batteryIconText
-    iconColor: root.activeColor
-    iconSize: 24
-    flat: true
 
-    ThemedText {
+    Item {
         anchors.centerIn: parent
-        anchors.horizontalCenterOffset: root.textOffsetX
-        anchors.verticalCenterOffset: root.textOffsetY
-        z: 1
-        text: root.batteryLevel.toString()
-        color: root.batteryLevel > 70 || root.batteryStatus === "Charging" ? Theme.bg : Theme.fg
-        font.bold: true
-        font.pixelSize: Constants.sizeXs
-        visible: root.batteryLevel > 0
+        width: 28
+        height: 14
+
+        Rectangle {
+            id: batteryBody
+
+            anchors.fill: parent
+            anchors.rightMargin: 2
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.fg
+            radius: 4
+
+            Rectangle {
+                id: batteryFill
+
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.margins: 1.5
+                width: Math.max(0, (parent.width - 3) * (root.batteryLevel / 100))
+                radius: 2.5
+                color: Theme.bgSecondary
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: Constants.animNormal
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
+            }
+
+            ThemedText {
+                anchors.centerIn: parent
+                anchors.horizontalCenterOffset: root.textOffsetX
+                anchors.verticalCenterOffset: root.textOffsetY
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: root.batteryLevel.toString()
+                font.pixelSize: 9
+                font.bold: true
+                color: Theme.fg
+                renderType: Text.QtRendering
+            }
+
+        }
+
+        Item {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: 2
+            height: 4
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 1
+                color: Theme.fg
+            }
+
+        }
+
     }
 
     Behavior on activeColor {
@@ -119,10 +152,8 @@ SvgIcon {
     }
 
     SequentialAnimation on opacity {
-        id: breathAnim
-
         loops: Animation.Infinite
-        running: root.batteryStatus === "Charging"
+        running: root.batteryStatus === "Charging" && root.batteryLevel < 100
         onRunningChanged: {
             if (!running)
                 root.opacity = 1;
@@ -130,7 +161,7 @@ SvgIcon {
         }
 
         NumberAnimation {
-            to: 0.4
+            to: 0.5
             duration: 1000
             easing.type: Easing.InOutSine
         }

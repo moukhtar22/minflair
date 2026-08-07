@@ -67,7 +67,7 @@ PanelWindow {
     Timer {
         id: closeDelayTimer
 
-        interval: root.animationDuration
+        interval: root.fadeDuration
         repeat: false
         onTriggered: {
             root._windowVisible = false;
@@ -90,7 +90,7 @@ PanelWindow {
             Keys.onEscapePressed: root.isOpen = false
             layer.enabled: true
             y: root.height > 0 ? (root.isOpen ? (root.height - root.preferredHeight) / 2 : root.height + Constants.size5Xl) : 3000
-            opacity: root.isOpen ? 1 : 0
+            opacity: 1
             scale: 1
 
             MouseArea {
@@ -125,20 +125,9 @@ PanelWindow {
                 enabled: root.height > 0
 
                 NumberAnimation {
-                    duration: root.animationDuration
-                    easing.type: Easing.BezierSpline
+                    duration: root.isOpen ? root.animationDuration : root.fadeDuration
+                    easing.type: root.isOpen ? Easing.BezierSpline : Easing.Linear
                     easing.bezierCurve: root.isOpen ? root.overshotCurve : root.easeCurve
-                }
-
-            }
-
-            Behavior on opacity {
-                enabled: HyprlandService.enableAnimations
-
-                NumberAnimation {
-                    duration: root.fadeDuration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: root.easeCurve
                 }
 
             }

@@ -76,6 +76,8 @@ PanelWindow {
                 height: layout.implicitHeight + Constants.sizeSm * 2 + 4
                 color: Theme.bg
                 radius: Constants.sizeLg
+                border.color: mainMouseArea.containsMouse ? Theme.accent : Theme.border
+                border.width: 1
                 layer.enabled: true
                 Component.onCompleted: {
                     if (model.notifData.summary !== "Volume" && model.notifData.summary !== "Brightness" && model.notifData.summary !== "Microphone") {
@@ -140,6 +142,7 @@ PanelWindow {
                     onExited: model.notifData.unlock(toastRect)
                     anchors.fill: parent
                     hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         if (model.notifData.summary !== "Power Menu")
                             toastRect.closeNotification();
@@ -427,6 +430,13 @@ PanelWindow {
                                 actionCommand.startDetached();
                             }
                         }
+                    }
+
+                }
+
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: Constants.animNormal
                     }
 
                 }

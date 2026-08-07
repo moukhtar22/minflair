@@ -35,7 +35,6 @@ Item {
 
             Card {
                 Layout.fillWidth: true
-                useBorder: true
 
                 ColumnLayout {
                     anchors.fill: parent

@@ -4,9 +4,9 @@ import qs.Core
 Rectangle {
     id: root
 
-    property color backgroundColor: "transparent"
+    property color backgroundColor: Theme.bgSecondary
     property int contentPadding: Constants.sizeLg
-    property bool useBorder: true
+    property bool useBorder: false
     default property alias content: innerContainer.data
 
     signal clicked(var mouse)
