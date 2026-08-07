@@ -177,7 +177,8 @@ ShellRoot {
     }
 
     PopupLoader {
-        popupId: "keybinds"
+        popupId: "minflair_keybinds"
+        exclusive: false
 
         sourceComponent: Component {
             KeybindsCheatSheet {

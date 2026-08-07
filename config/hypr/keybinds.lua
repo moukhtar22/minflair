@@ -53,6 +53,8 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.workspace.toggle_special("minimized"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"))
 -- # Switch Keyboard Layout
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("$HOME/.config/quickshell/Scripts/toggle_kb_layout.sh"))
+-- # Restart Quickshell
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("killall qs; qs"))
 
 -- ## Volume
 
@@ -99,29 +101,29 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/media_playe
 -- # Stop
 hl.bind("XF86AudioStop", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/media_player.sh stop"), { locked = true })
 
--- ## Quickshell Overlays & Menus
+-- ## Quickshell Widgets
 
--- # Open App Launcher
+-- # Toggle App Launcher
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_launcher"))
 -- # Toggle Control Center
 hl.bind("CTRL + ALT + S", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_controlCenter"))
 -- # Toggle Power Menu
 hl.bind("CTRL + ALT + X", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_powerMenu"))
--- # Open Clipboard History
+-- # Toggle Clipboard History
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_clipboard"))
--- # Open Wallpaper Selector
+-- # Toggle Wallpaper Selector
 hl.bind("CTRL + ALT + W", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_wallpaper"))
--- # Keybinds Cheat Sheet
-hl.bind(mainMod .. " + K", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_keybinds"))
--- # Take Screenshot
+-- # Toggle Screenshot
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_screenshot"))
 
 -- ## Quickshell Apps
 
 -- # Toggle Settings
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_minflair_settings"))
--- # Open Package Manager
+-- # Toggle Package Manager
 hl.bind("CTRL + ALT + P", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_packagemanager"))
+-- # Toggle Keybinds Cheat Sheet
+hl.bind(mainMod .. " + K", hl.dsp.exec_cmd("socat - UNIX-CONNECT:/tmp/quickshell_minflair_keybinds"))
 
 -- ## Window Groups
 
