@@ -24,6 +24,40 @@ ColumnLayout {
             menuRoot.menuStack = [];
     }
 
+    function isRedundantSeparator(idx) {
+        let children = menuRoot.activeChildren;
+        if (!children)
+            return false;
+
+        let prevIsSeparator = true;
+        for (let i = idx - 1; i >= 0; i--) {
+            let prev = children[i];
+            if (prev && (prev.text !== "" || prev.isSeparator)) {
+                if (!prev.isSeparator)
+                    prevIsSeparator = false;
+
+                break;
+            }
+        }
+        if (prevIsSeparator)
+            return true;
+
+        let nextIsSeparator = true;
+        for (let i = idx + 1; i < children.length; i++) {
+            let next = children[i];
+            if (next && (next.text !== "" || next.isSeparator)) {
+                if (!next.isSeparator)
+                    nextIsSeparator = false;
+
+                break;
+            }
+        }
+        if (nextIsSeparator)
+            return true;
+
+        return false;
+    }
+
     spacing: Constants.sizeXs
     onMenuHandleChanged: {
         if (menuHandle)
@@ -88,7 +122,7 @@ ColumnLayout {
 
         ColumnLayout {
             width: parent.width
-            spacing: 0
+            spacing: Constants.sizeXs
 
             Repeater {
                 model: menuRoot.activeChildren
@@ -99,11 +133,19 @@ ColumnLayout {
                     property real animOffsetX: 15
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: modelData.isSeparator ? 1 : 32
-                    implicitWidth: modelData.isSeparator ? 0 : (itemRow.implicitWidth + (Constants.sizeSm * 2))
+                    Layout.preferredHeight: (modelData && modelData.isSeparator) ? 1 : 32
+                    implicitWidth: (modelData && modelData.isSeparator) ? 0 : (itemRow.implicitWidth + (Constants.sizeSm * 2))
                     color: itemMouseArea.containsMouse ? Theme.bgSecondary : "transparent"
                     radius: Constants.sizeLg
-                    visible: (modelData.text !== "" || modelData.isSeparator)
+                    visible: {
+                        if (!modelData)
+                            return false;
+
+                        if (modelData.isSeparator)
+                            return !menuRoot.isRedundantSeparator(index);
+
+                        return modelData.text !== "";
+                    }
                     opacity: 0
                     Component.onCompleted: {
                         itemRoot.opacity = 1;
@@ -117,7 +159,7 @@ ColumnLayout {
                         anchors.leftMargin: Constants.sizeSm
                         anchors.rightMargin: Constants.sizeSm
                         spacing: Constants.sizeSm
-                        visible: !modelData.isSeparator
+                        visible: modelData && !modelData.isSeparator
 
                         Item {
                             Layout.preferredWidth: trayIcon.status === Image.Ready ? Constants.sizeLg : 0
@@ -133,7 +175,7 @@ ColumnLayout {
                                 flat: true
                                 iconColor: Theme.fg
                                 icon: {
-                                    if (!modelData.icon)
+                                    if (!modelData || !modelData.icon)
                                         return "";
 
                                     try {
@@ -156,15 +198,15 @@ ColumnLayout {
 
                         ThemedText {
                             Layout.fillWidth: true
-                            text: modelData.text
-                            color: modelData.enabled ? Theme.fg : Theme.muted
+                            text: modelData ? modelData.text : ""
+                            color: (modelData && modelData.enabled) ? Theme.fg : Theme.muted
                             font.pixelSize: Constants.sizeSm
                             elide: Text.ElideRight
                         }
 
                         SvgIcon {
                             icon: "check"
-                            visible: modelData.checkState === Qt.Checked
+                            visible: modelData && modelData.checkState === Qt.Checked
                             iconColor: Theme.accent
                             iconSize: Constants.sizeXs
                             flat: true
@@ -172,7 +214,7 @@ ColumnLayout {
 
                         SvgIcon {
                             icon: "chevron-right"
-                            visible: modelData.hasChildren
+                            visible: modelData && modelData.hasChildren
                             iconColor: Theme.muted
                             iconSize: Constants.sizeXs
                             flat: true

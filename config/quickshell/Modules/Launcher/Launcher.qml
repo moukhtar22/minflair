@@ -304,25 +304,11 @@ CenterWindow {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        ColumnLayout {
+        GhostEmptyState {
             anchors.centerIn: parent
             visible: root.filteredApps.length === 0 && searchField.text !== ""
-
-            SvgIcon {
-                icon: "ghost"
-                iconColor: Theme.muted
-                iconSize: 72
-                flat: true
-                Layout.alignment: Qt.AlignHCenter
-            }
-
-            ThemedText {
-                text: "No applications found"
-                color: Theme.muted
-                font.pixelSize: Constants.sizeMd
-                Layout.alignment: Qt.AlignHCenter
-            }
-
+            text: "No applications found"
+            isAnimating: visible
         }
 
         ListView {
@@ -589,12 +575,9 @@ CenterWindow {
                         delegate: Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 34
-                            Layout.leftMargin: Constants.sizeLg + Constants.size3Xl
-                            Layout.rightMargin: Constants.sizeLg
-                            color: Theme.bgSecondary
+                            Layout.leftMargin: Constants.size4Xl
+                            color: "transparent"
                             radius: Constants.sizeLg
-                            border.width: 1
-                            border.color: delegateRoot.currentActionIndex === index ? Theme.accent : Theme.border
 
                             RowLayout {
                                 anchors.fill: parent

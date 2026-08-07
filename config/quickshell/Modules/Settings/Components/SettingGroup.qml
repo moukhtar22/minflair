@@ -2,14 +2,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Core
 import qs.Core.Components
+import qs.Core.Services
 
 Card {
     id: root
 
-    default property alias groupContent: mainLayout.data
+    property string title: ""
+    property string icon: "ghost"
+    default property alias groupContent: contentLayout.data
 
-    backgroundColor: Theme.bgSecondary
-    useBorder: true
     Layout.fillWidth: true
     contentPadding: Constants.sizeLg
 
@@ -18,6 +19,34 @@ Card {
 
         width: parent.width
         spacing: Constants.sizeLg
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Constants.sizeMd
+            visible: root.title !== ""
+
+            SvgIcon {
+                icon: root.icon
+                iconSize: Constants.sizeLg
+                iconColor: Theme.muted
+                flat: true
+            }
+
+            ThemedText {
+                text: root.title
+                font.pixelSize: Constants.sizeSm
+                color: Theme.muted
+            }
+
+        }
+
+        ColumnLayout {
+            id: contentLayout
+
+            Layout.fillWidth: true
+            spacing: Constants.sizeLg
+        }
+
     }
 
 }

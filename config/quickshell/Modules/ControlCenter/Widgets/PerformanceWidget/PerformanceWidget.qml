@@ -86,7 +86,7 @@ Item {
                         Layout.preferredHeight: delegateLayout.implicitHeight + Constants.sizeLg * 2
                         radius: Constants.sizeLg
                         color: profileCard.isHovered ? Theme.bgTertiary : Theme.bgSecondary
-                        border.width: 1
+                        border.width: profileCard.isActive ? 1 : 0
                         border.color: profileCard.isActive ? Theme.accent : Theme.border
                         scale: isPressed ? 0.95 : (isHovered ? 1.02 : 1)
 

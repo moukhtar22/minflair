@@ -12,7 +12,7 @@ Rectangle {
     property bool flat: false
     property color bgColor: flat ? "transparent" : Theme.bgSecondary
     property color iconColor: Theme.fg
-    property color hoverColor: iconColor
+    property color hoverColor: "transparent"
     property bool isActive: false
     property alias hovered: mouseArea.containsMouse
     property string textIcon: ""
@@ -69,9 +69,9 @@ Rectangle {
             }
 
             ColorOverlay {
-                anchors.fill: parent
-                source: iconImage
-                color: {
+                id: colorOverlay
+
+                property color targetColor: {
                     if (disabled)
                         return Theme.muted;
 
@@ -80,6 +80,11 @@ Rectangle {
 
                     return root.iconColor;
                 }
+
+                anchors.fill: parent
+                source: iconImage
+                color: Qt.rgba(targetColor.r, targetColor.g, targetColor.b, 1)
+                opacity: targetColor.a
                 visible: !root.useOriginalColors
                 scale: disabled ? 1 : mouseArea.containsMouse ? 1.15 : 1
 
@@ -93,6 +98,13 @@ Rectangle {
 
                 Behavior on color {
                     ColorAnimation {
+                        duration: Constants.animNormal
+                    }
+
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
                         duration: Constants.animNormal
                     }
 

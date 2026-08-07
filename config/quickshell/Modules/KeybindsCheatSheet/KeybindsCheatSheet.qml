@@ -1,3 +1,4 @@
+import "Components"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -7,7 +8,7 @@ import qs.Core
 import qs.Core.Components
 import qs.Core.Windows
 
-CenterWindow {
+AppWindow {
     id: root
 
     property var hyprlandData: []
@@ -15,15 +16,42 @@ CenterWindow {
     property int activeTab: 0
     property int selectedCategory: 0
     property var currentData: activeTab === 0 ? hyprlandData : nvimData
-    property var currentBinds: {
+    property string searchText: ""
+    property var computedBinds: {
         if (currentData.length === 0)
             return [];
 
+        if (searchText !== "") {
+            let matches = [];
+            let lowerSearch = searchText.toLowerCase();
+            for (let i = 0; i < currentData.length; i++) {
+                let cat = currentData[i];
+                for (let j = 0; j < cat.binds.length; j++) {
+                    let bind = cat.binds[j];
+                    if (bind.is_subheader)
+                        continue;
+
+                    let matchDesc = bind.desc && bind.desc.toLowerCase().indexOf(lowerSearch) !== -1;
+                    let matchKey = false;
+                    for (let k = 0; k < bind.uiElements.length; k++) {
+                        if (bind.uiElements[k].isKey && bind.uiElements[k].text.toLowerCase().indexOf(lowerSearch) !== -1) {
+                            matchKey = true;
+                            break;
+                        }
+                    }
+                    if (matchDesc || matchKey)
+                        matches.push(bind);
+
+                }
+            }
+            return matches;
+        }
         if (selectedCategory < 0 || selectedCategory >= currentData.length)
             return [];
 
         return currentData[selectedCategory].binds;
     }
+    property var displayedBinds: []
 
     function loadKeybinds() {
         hyprlandData = [];
@@ -109,16 +137,49 @@ CenterWindow {
         return processed;
     }
 
-    popupId: "keybinds"
-    preferredWidth: 850
-    preferredHeight: 550
-    onPopupOpened: root.loadKeybinds()
+    contentPadding: 0
+    onComputedBindsChanged: {
+        if (transitionView.updateCallback === null)
+            root.displayedBinds = root.computedBinds;
+
+    }
+    popupId: "minflair_keybinds"
+    windowTitle: "Minflair Keybinds Cheat Sheet"
+    onIsOpenChanged: {
+        if (isOpen)
+            root.loadKeybinds();
+
+    }
 
     Shortcut {
         sequence: "Tab"
         enabled: root.isOpen && root.currentData.length > 0
         onActivated: {
-            root.selectedCategory = (root.selectedCategory + 1) % root.currentData.length;
+            let nextCat = (root.selectedCategory + 1) % root.currentData.length;
+            let dir = nextCat > root.selectedCategory ? 1 : -1;
+            if (nextCat === 0 && root.selectedCategory > 0)
+                dir = 1;
+
+            transitionView.triggerTransition(dir, function() {
+                root.displayedBinds = root.computedBinds;
+            });
+            root.selectedCategory = nextCat;
+        }
+    }
+
+    Shortcut {
+        sequence: "Shift+Tab"
+        enabled: root.isOpen && root.currentData.length > 0
+        onActivated: {
+            let prevCat = (root.selectedCategory - 1 + root.currentData.length) % root.currentData.length;
+            let dir = prevCat < root.selectedCategory ? -1 : 1;
+            if (prevCat === root.currentData.length - 1 && root.selectedCategory === 0)
+                dir = -1;
+
+            transitionView.triggerTransition(dir, function() {
+                root.displayedBinds = root.computedBinds;
+            });
+            root.selectedCategory = prevCat;
         }
     }
 
@@ -126,7 +187,12 @@ CenterWindow {
         sequence: "Ctrl+Tab"
         enabled: root.isOpen
         onActivated: {
-            root.activeTab = root.activeTab === 0 ? 1 : 0;
+            let nextTab = root.activeTab === 0 ? 1 : 0;
+            let dir = nextTab > root.activeTab ? 1 : -1;
+            transitionView.triggerTransition(dir, function() {
+                root.displayedBinds = root.computedBinds;
+            });
+            root.activeTab = nextTab;
             root.selectedCategory = 0;
         }
     }
@@ -176,308 +242,49 @@ CenterWindow {
     RowLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        spacing: Constants.sizeLg
+        spacing: 0
 
-        Flickable {
-            Layout.preferredWidth: 170
-            Layout.fillHeight: true
-            contentHeight: sidebarCol.implicitHeight
-            clip: true
-            flickableDirection: Flickable.VerticalFlick
-            boundsBehavior: Flickable.StopAtBounds
+        KeybindsSidebar {
+            activeTab: root.activeTab
+            selectedCategory: root.selectedCategory
+            currentData: root.currentData
+            searchText: root.searchText
+            onTabSelected: function(tabIndex) {
+                if (tabIndex === root.activeTab)
+                    return ;
 
-            ColumnLayout {
-                id: sidebarCol
-
-                width: parent.width
-                spacing: 2
-
-                ThemedText {
-                    text: "Environment"
-                    color: Theme.muted
-                    font.pixelSize: Constants.sizeXs + 2
-                    font.bold: true
-                    Layout.leftMargin: Constants.sizeXs
-                    Layout.topMargin: Constants.sizeXs
-                    Layout.bottomMargin: 2
-                }
-
-                SidebarItem {
-                    label: "Hyprland"
-                    icon: "󰖲"
-                    isActive: root.activeTab === 0
-                    onClicked: {
-                        root.activeTab = 0;
-                        root.selectedCategory = 0;
-                    }
-                }
-
-                SidebarItem {
-                    label: "Neovim"
-                    icon: ""
-                    isActive: root.activeTab === 1
-                    onClicked: {
-                        root.activeTab = 1;
-                        root.selectedCategory = 0;
-                    }
-                }
-
-                Divider {
-                    Layout.margins: Constants.sizeXs
-                    Layout.topMargin: 8
-                    Layout.bottomMargin: 8
-                }
-
-                ThemedText {
-                    text: "Categories"
-                    color: Theme.muted
-                    font.pixelSize: Constants.sizeXs + 2
-                    font.bold: true
-                    Layout.leftMargin: Constants.sizeXs
-                    Layout.bottomMargin: 2
-                }
-
-                Repeater {
-                    model: root.currentData
-
-                    delegate: SidebarItem {
-                        label: modelData.section
-                        subLabel: modelData.bindCount
-                        isActive: index === root.selectedCategory
-                        onClicked: root.selectedCategory = index
-                    }
-
-                }
-
+                let dir = tabIndex > root.activeTab ? 1 : -1;
+                transitionView.triggerTransition(dir, function() {
+                    root.displayedBinds = root.computedBinds;
+                });
+                root.activeTab = tabIndex;
             }
+            onCategorySelected: function(categoryIndex) {
+                if (categoryIndex === root.selectedCategory)
+                    return ;
 
+                let dir = categoryIndex > root.selectedCategory ? 1 : -1;
+                transitionView.triggerTransition(dir, function() {
+                    root.displayedBinds = root.computedBinds;
+                });
+                root.selectedCategory = categoryIndex;
+            }
+            onSearchRequested: function(text) {
+                root.searchText = text;
+            }
         }
 
-        Divider {
-            vertical: true
-        }
+        PageTransitionView {
+            id: transitionView
 
-        Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            contentHeight: bindsCol.implicitHeight + (Constants.sizeMd * 2)
-            clip: true
-            flickableDirection: Flickable.VerticalFlick
-            boundsBehavior: Flickable.StopAtBounds
 
-            ColumnLayout {
-                id: bindsCol
-
-                width: parent.width - (Constants.sizeMd * 2)
-                x: Constants.sizeMd
-                y: Constants.sizeMd
-                spacing: 4
-
-                Repeater {
-                    model: root.currentBinds
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: visible ? 24 : 0
-                            Layout.topMargin: visible ? (index === 0 ? 0 : Constants.sizeLg) : 0
-                            Layout.bottomMargin: visible ? Constants.sizeSm : 0
-                            color: "transparent"
-                            visible: modelData.is_subheader === true
-
-                            ThemedText {
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 4
-                                text: modelData.name || ""
-                                color: Theme.accent
-                                font.pixelSize: Constants.sizeMd
-                                font.bold: true
-                            }
-
-                            Divider {
-                                anchors.bottom: parent.bottom
-                                width: parent.width
-                            }
-
-                        }
-
-                        KeybindItem {
-                            visible: modelData.is_subheader !== true
-                            uiElements: modelData.uiElements || []
-                            desc: modelData.desc || ""
-                        }
-
-                    }
-
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredHeight: 100
-                    visible: root.currentBinds.length === 0
-
-                    ThemedText {
-                        anchors.centerIn: parent
-                        text: "No keybinds loaded"
-                        color: Theme.muted
-                        font.pixelSize: Constants.sizeMd
-                    }
-
-                }
-
+            KeybindsList {
+                anchors.fill: parent
+                currentBinds: root.displayedBinds
             }
 
-            ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AlwaysOff
-            }
-
-        }
-
-    }
-
-    component SidebarItem: Rectangle {
-        property string icon
-        property string label
-        property string subLabel
-        property bool isActive: false
-
-        signal clicked()
-
-        Layout.fillWidth: true
-        Layout.preferredHeight: Constants.size3Xl
-        radius: Constants.sizeLg
-        color: isActive ? Theme.bgSecondary : (itemHover.hovered ? Theme.bgSecondary : "transparent")
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Constants.sizeXs
-            anchors.rightMargin: Constants.sizeXs
-            spacing: Constants.sizeXs
-
-            Rectangle {
-                width: 3
-                height: 14
-                radius: width / 2
-                color: Theme.accent
-                visible: isActive
-            }
-
-            ThemedText {
-                text: icon
-                visible: icon !== ""
-                color: isActive ? Theme.accent : Theme.fg
-                font.pixelSize: Constants.sizeMd
-                Layout.preferredWidth: 20
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            ThemedText {
-                text: label
-                color: isActive ? Theme.accent : Theme.fg
-                font.pixelSize: Constants.sizeSm
-                font.bold: isActive
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-            }
-
-            ThemedText {
-                text: subLabel
-                visible: subLabel !== ""
-                color: Theme.muted
-                font.pixelSize: Constants.sizeXs + 2
-            }
-
-        }
-
-        HoverHandler {
-            id: itemHover
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: parent.clicked()
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Constants.animFast
-            }
-
-        }
-
-    }
-
-    component KeybindItem: RowLayout {
-        property var uiElements
-        property string desc
-
-        Layout.fillWidth: true
-        spacing: Constants.sizeLg
-
-        Row {
-            spacing: 4
-            Layout.preferredWidth: 260
-            Layout.alignment: Qt.AlignVCenter
-
-            Repeater {
-                model: uiElements
-
-                delegate: Item {
-                    required property var modelData
-
-                    width: modelData.isKey ? keyRect.width : sepText.implicitWidth
-                    height: 26
-
-                    Rectangle {
-                        id: keyRect
-
-                        visible: modelData.isKey
-                        width: Math.max(capText.implicitWidth + 14, 28)
-                        height: 26
-                        radius: 5
-                        color: Theme.bgSecondary
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        ThemedText {
-                            id: capText
-
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: -1
-                            text: modelData.isKey ? modelData.text : ""
-                            color: Theme.accent
-                            font.pixelSize: Constants.sizeSm
-                            font.bold: true
-                        }
-
-                    }
-
-                    ThemedText {
-                        id: sepText
-
-                        visible: !modelData.isKey
-                        text: !modelData.isKey ? modelData.text : ""
-                        color: Theme.muted
-                        font.pixelSize: Constants.sizeMd
-                        font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                }
-
-            }
-
-        }
-
-        ThemedText {
-            text: desc
-            font.pixelSize: Constants.sizeSm
-            Layout.fillWidth: true
-            elide: Text.ElideRight
         }
 
     }

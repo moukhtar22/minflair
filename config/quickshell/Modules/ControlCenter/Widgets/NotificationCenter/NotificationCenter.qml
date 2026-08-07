@@ -199,11 +199,10 @@ Card {
 
                         width: ListView.view.width
                         height: delegateLayout.implicitHeight + Constants.sizeLg * 2
-                        color: Theme.bgSecondary
+                        color: delegateMouseArea.containsMouse ? Theme.bgTertiary : Theme.bgSecondary
                         radius: Constants.sizeXl
                         border.width: 1
-                        border.color: delegateMouseArea.containsMouse ? Theme.border : "transparent"
-                        scale: delegateMouseArea.containsMouse ? 1.02 : 1
+                        border.color: delegateMouseArea.containsMouse ? Theme.accent : Theme.border
 
                         MouseArea {
                             id: delegateMouseArea

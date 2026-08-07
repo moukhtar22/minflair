@@ -23,13 +23,17 @@ Item {
     property int wpTransitionFps: 60
     property int wpTransitionAngle: 30
     property bool hyprBlur: true
-    property int hyprRounding: 16
+    property int hyprRounding: 32
     property int hyprActiveOpacity: 100
     property int hyprInactiveOpacity: 100
     property int hyprBlurSize: 6
     property int hyprBlurPasses: 4
     property int hyprGapsIn: 4
     property int hyprGapsOut: 8
+    property int hyprBorderSize: 2
+    property bool hyprShadow: false
+    property int hyprShadowRange: 4
+    property int hyprShadowRenderPower: 3
 
     function applyNightLight(state) {
         if (state) {
@@ -207,6 +211,30 @@ Item {
             applyHyprlandSettings();
         }
     }
+    onHyprBorderSizeChanged: {
+        if (SettingsService.settingsLoaded) {
+            SettingsService.saveSettings();
+            applyHyprlandSettings();
+        }
+    }
+    onHyprShadowChanged: {
+        if (SettingsService.settingsLoaded) {
+            SettingsService.saveSettings();
+            applyHyprlandSettings();
+        }
+    }
+    onHyprShadowRangeChanged: {
+        if (SettingsService.settingsLoaded) {
+            SettingsService.saveSettings();
+            applyHyprlandSettings();
+        }
+    }
+    onHyprShadowRenderPowerChanged: {
+        if (SettingsService.settingsLoaded) {
+            SettingsService.saveSettings();
+            applyHyprlandSettings();
+        }
+    }
 
     Timer {
         id: applySettingsTimer
@@ -216,7 +244,7 @@ Item {
         onTriggered: {
             let ao = (hyprActiveOpacity / 100).toFixed(2);
             let io = (hyprInactiveOpacity / 100).toFixed(2);
-            let luaStr = "hl.config({ decoration = { blur = { enabled = " + (hyprBlur ? "true" : "false") + ", size = " + hyprBlurSize + ", passes = " + hyprBlurPasses + " }, rounding = " + hyprRounding + ", active_opacity = " + ao + ", inactive_opacity = " + io + " }, general = { gaps_in = " + hyprGapsIn + ", gaps_out = " + hyprGapsOut + " } })";
+            let luaStr = "hl.config({ decoration = { blur = { enabled = " + (hyprBlur ? "true" : "false") + ", size = " + hyprBlurSize + ", passes = " + hyprBlurPasses + " }, rounding = " + hyprRounding + ", active_opacity = " + ao + ", inactive_opacity = " + io + ", shadow = { enabled = " + (hyprShadow ? "true" : "false") + ", range = " + hyprShadowRange + ", render_power = " + hyprShadowRenderPower + " } }, general = { gaps_in = " + hyprGapsIn + ", gaps_out = " + hyprGapsOut + ", border_size = " + hyprBorderSize + " } })";
             setHyprlandOptionProc.command = ["sh", "-c", "hyprctl eval '" + luaStr + "'"];
             setHyprlandOptionProc.running = false;
             setHyprlandOptionProc.running = true;

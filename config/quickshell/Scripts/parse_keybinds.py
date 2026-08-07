@@ -77,13 +77,13 @@ def parse_key(key_str):
 
 def parse_keybinds(filepath):
     SECTION_MERGE_HYPR = {
-        "Applications": "System",
+        "Applications": "Applications",
         "Tools": "System",
         "Quickshell Widgets": "Quickshell",
         "Quickshell Apps": "Quickshell",
-        "Volume": "Media",
-        "Brightness": "Media",
-        "Media Player": "Media",
+        "Volume": "System",
+        "Brightness": "System",
+        "Media Player": "System",
         "Window Management": "Windows",
         "Window Groups": "Windows",
         "Navigation": "Windows",
@@ -98,87 +98,96 @@ def parse_keybinds(filepath):
     seen_group = {}
 
     with open(filepath) as f:
-        for line in f:
-            line = line.rstrip()
+        lines = f.readlines()
 
-            if not line or line.startswith("local") or line.startswith("$"):
-                continue
+    i = 0
+    while i < len(lines):
+        line = lines[i].rstrip()
+        i += 1
 
-            if line.startswith("-- ## "):
-                name = line[6:].strip()
-                target = SECTION_MERGE_HYPR.get(name, name)
-                if target not in merged:
-                    merged[target] = []
-                    section_order.append(target)
+        if not line or line.startswith("local") or line.startswith("$"):
+            continue
 
-                merged[target].append({"is_subheader": True, "name": name})
-                current_target = target
-                seen_group = {}
-                continue
+        if line.startswith("-- ## "):
+            name = line[6:].strip()
+            target = SECTION_MERGE_HYPR.get(name, name)
+            if target not in merged:
+                merged[target] = []
+                section_order.append(target)
 
-            if line.startswith("-- # "):
-                current_desc = line[5:].strip()
-                continue
+            merged[target].append({"is_subheader": True, "name": name})
+            current_target = target
+            seen_group = {}
+            continue
 
-            m = None
-            bind_m = re.match(r"^hl\.bind[a-z]*\s*\(\s*(.*?)\s*,", line)
-            if bind_m:
-                arg = bind_m.group(1)
-                clean = (
-                    arg.replace("mainMod", "SUPER")
-                    .replace("..", "")
-                    .replace('"', "")
-                    .replace("'", "")
-                    .strip()
-                )
-                parts = clean.split(" + ")
+        if line.startswith("-- # "):
+            current_desc = line[5:].strip()
+            continue
 
-                class MockMatch:
-                    def __init__(self, p):
-                        self.p = p
+        if line.startswith("hl.") and "," not in line:
+            while "," not in line and i < len(lines):
+                line += " " + lines[i].strip()
+                i += 1
 
-                    def group(self, i):
-                        return self.p[i - 1]
+        m = None
+        bind_m = re.match(r"^hl\.bind[a-z]*\s*\(\s*(.*?)\s*,", line)
+        if bind_m:
+            arg = bind_m.group(1)
+            clean = (
+                arg.replace("mainMod", "SUPER")
+                .replace("..", "")
+                .replace('"', "")
+                .replace("'", "")
+                .strip()
+            )
+            parts = clean.split(" + ")
 
-                if len(parts) >= 2:
-                    mods = " ".join([p.strip() for p in parts[:-1]])
-                    m = MockMatch([mods, parts[-1].strip()])
-                elif len(parts) == 1:
-                    m = MockMatch(["", parts[0].strip()])
-            else:
-                kw_m = re.match(
-                    r"^hl\.keyword\(\s*\"bind[a-z]*\"\s*,\s*\"(.*?),\s*(.+?),", line
-                )
-                if kw_m:
-                    m = kw_m
+            class MockMatch:
+                def __init__(self, p):
+                    self.p = p
 
-            if not m or not current_target:
-                continue
+                def group(self, i):
+                    return self.p[i - 1]
 
-            mods = parse_mods(m.group(1))
-            key = parse_key(m.group(2))
+            if len(parts) >= 2:
+                mods = " ".join([p.strip() for p in parts[:-1]])
+                m = MockMatch([mods, parts[-1].strip()])
+            elif len(parts) == 1:
+                m = MockMatch(["", parts[0].strip()])
+        else:
+            kw_m = re.match(
+                r"^hl\.keyword\(\s*\"bind[a-z]*\"\s*,\s*\"(.*?),\s*(.+?),", line
+            )
+            if kw_m:
+                m = kw_m
 
-            if not current_desc:
-                continue
+        if not m or not current_target:
+            continue
 
-            group_key = current_desc
-            if group_key in seen_group:
-                current_desc = None
-                continue
+        mods = parse_mods(m.group(1))
+        key = parse_key(m.group(2))
 
-            seen_group[group_key] = True
+        if not current_desc:
+            continue
 
-            hint_match = re.search(r"\((.+?)\)", current_desc)
-            if hint_match:
-                desc_clean = current_desc[: hint_match.start()].strip()
-                hint_keys = hint_match.group(1)
-                keys = mods + [hint_keys]
-            else:
-                desc_clean = current_desc
-                keys = mods + [key]
-
-            merged[current_target].append({"keys": keys, "desc": desc_clean})
+        group_key = current_desc
+        if group_key in seen_group:
             current_desc = None
+            continue
+
+        seen_group[group_key] = True
+
+        hint_match = re.search(r"\((.+?)\)", current_desc)
+        if hint_match:
+            desc_clean = current_desc[: hint_match.start()].strip()
+            hint_keys = hint_match.group(1)
+            keys = mods + [hint_keys]
+        else:
+            desc_clean = current_desc
+            keys = mods + [key]
+
+        merged[current_target].append({"keys": keys, "desc": desc_clean})
+        current_desc = None
 
     sections = [{"section": name, "binds": merged[name]} for name in section_order]
     print(json.dumps(sections))

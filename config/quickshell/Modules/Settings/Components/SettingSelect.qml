@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Core
 import qs.Core.Components
+import qs.Core.Services
 
 Rectangle {
     id: root
@@ -12,6 +13,7 @@ Rectangle {
     property string description: ""
     property var model: []
     property int currentIndex: 0
+    property int comboWidth: 160
     property string fallbackText: "Auto"
     property var iconMap: ({
     })
@@ -19,9 +21,9 @@ Rectangle {
 
     signal activated(int index)
 
+    Layout.preferredHeight: mainLayout.implicitHeight
     Layout.fillWidth: true
     color: "transparent"
-    implicitHeight: mainLayout.implicitHeight
 
     RowLayout {
         id: mainLayout
@@ -37,6 +39,7 @@ Rectangle {
             ThemedText {
                 text: root.label
                 font.pixelSize: Constants.sizeMd
+                color: root.enabled ? Theme.fg : Theme.muted
             }
 
             ThemedText {
@@ -56,8 +59,9 @@ Rectangle {
             id: internalCombo
 
             z: 10
+            opacity: root.enabled ? 1 : 0.5
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-            implicitWidth: 160
+            implicitWidth: root.comboWidth
             implicitHeight: 36
             model: root.model
             currentIndex: root.currentIndex
@@ -139,7 +143,7 @@ Rectangle {
             }
 
             background: Rectangle {
-                color: internalCombo.down || internalCombo.hovered || internalCombo.popup.visible ? Theme.bgTertiary : Theme.bgSecondary
+                color: internalCombo.down || internalCombo.hovered || internalCombo.popup.visible ? Qt.lighter(Theme.bgTertiary, 1.2) : Theme.bgTertiary
                 radius: Constants.sizeSm
                 border.width: 1
                 border.color: Theme.border

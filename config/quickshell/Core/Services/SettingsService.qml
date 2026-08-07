@@ -16,6 +16,7 @@ Item {
     property string musicPlayerCommand: "spotify"
     property bool isSettingsLoading: settingsLoader.running
     property string quoteCategory: "All"
+    property string fontFamily: "Geist"
 
     function saveSettings() {
         saveTimer.restart();
@@ -60,6 +61,11 @@ Item {
             saveSettings();
 
     }
+    onFontFamilyChanged: {
+        if (settingsLoaded)
+            saveSettings();
+
+    }
 
     Timer {
         id: saveTimer
@@ -99,9 +105,14 @@ Item {
                 "hyprBlurPasses": HyprlandService.hyprBlurPasses,
                 "hyprGapsIn": HyprlandService.hyprGapsIn,
                 "hyprGapsOut": HyprlandService.hyprGapsOut,
+                "hyprBorderSize": HyprlandService.hyprBorderSize,
+                "hyprShadow": HyprlandService.hyprShadow,
+                "hyprShadowRange": HyprlandService.hyprShadowRange,
+                "hyprShadowRenderPower": HyprlandService.hyprShadowRenderPower,
                 "micMuted": AudioService.micMuted,
                 "micVolume": AudioService.micVolume,
-                "quoteCategory": settingsService.quoteCategory
+                "quoteCategory": settingsService.quoteCategory,
+                "fontFamily": settingsService.fontFamily
             };
             settingsSaver.command = ["sh", "-c", "mkdir -p ~/.cache/quickshell && cat << 'EOF' > ~/.cache/quickshell/settings_prefs.json\n" + JSON.stringify(data) + "\nEOF"];
             settingsSaver.running = true;
@@ -222,6 +233,18 @@ Item {
                         if (prefs.hyprGapsOut !== undefined)
                             HyprlandService.hyprGapsOut = prefs.hyprGapsOut;
 
+                        if (prefs.hyprBorderSize !== undefined)
+                            HyprlandService.hyprBorderSize = prefs.hyprBorderSize;
+
+                        if (prefs.hyprShadow !== undefined)
+                            HyprlandService.hyprShadow = prefs.hyprShadow;
+
+                        if (prefs.hyprShadowRange !== undefined)
+                            HyprlandService.hyprShadowRange = prefs.hyprShadowRange;
+
+                        if (prefs.hyprShadowRenderPower !== undefined)
+                            HyprlandService.hyprShadowRenderPower = prefs.hyprShadowRenderPower;
+
                         HyprlandService.startupAnimations();
                         if (prefs.micVolume !== undefined) {
                             AudioService.micVolume = AudioService.hasPhysicalMic ? prefs.micVolume : 0;
@@ -237,6 +260,9 @@ Item {
                         }
                         if (prefs.quoteCategory !== undefined)
                             settingsService.quoteCategory = prefs.quoteCategory;
+
+                        if (prefs.fontFamily !== undefined)
+                            settingsService.fontFamily = prefs.fontFamily;
 
                     } catch (e) {
                         console.error("Error loading settings: " + e);

@@ -12,7 +12,7 @@ FloatingWindow {
     property string popupId: ""
     property string windowTitle: ""
     default property alias content: innerLayout.data
-    property color backgroundColor: Theme.bg
+    property color backgroundColor: Theme.opaqueBg
     property int contentPadding: Constants.sizeLg
     property bool isOpen: false
     property bool _windowVisible: false

@@ -3,7 +3,7 @@ import qs.Core.Services
 pragma Singleton
 
 QtObject {
-    property string fontFamily: "Geist"
+    property string fontFamily: SettingsService.fontFamily
     property int size3Xs: 2
     property int size2Xs: 4
     property int sizeXs: 8

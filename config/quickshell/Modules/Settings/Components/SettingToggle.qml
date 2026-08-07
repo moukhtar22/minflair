@@ -1,17 +1,22 @@
+import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.Core
 import qs.Core.Components
+import qs.Core.Services
 
 Rectangle {
     id: root
 
     property string label: ""
+    property string description: ""
     property bool checked: false
+    property bool isSubSetting: false
 
-    opacity: root.enabled ? 1 : 0.4
+    signal toggled(bool checked)
+
     Layout.fillWidth: true
     color: "transparent"
     implicitHeight: mainLayout.implicitHeight
@@ -42,6 +47,14 @@ Rectangle {
                     ThemedText {
                         text: root.label
                         font.pixelSize: Constants.sizeMd
+                        color: root.enabled ? Theme.fg : Theme.muted
+                    }
+
+                    ThemedText {
+                        text: root.description
+                        font.pixelSize: Constants.sizeSm
+                        color: Theme.muted
+                        visible: root.description !== ""
                     }
 
                 }
@@ -55,6 +68,7 @@ Rectangle {
 
                     z: 10
                     Layout.alignment: Qt.AlignVCenter
+                    opacity: root.enabled ? 1 : 0.5
                     checked: root.checked
                     onToggled: root.checked = checked
                     implicitWidth: 44
@@ -80,6 +94,15 @@ Rectangle {
                             radius: width / 2
                             color: Theme.bg
                             scale: settingSwitch.pressed ? 0.85 : (settingSwitch.hovered ? 1.08 : 1)
+                            layer.enabled: true
+
+                            layer.effect: DropShadow {
+                                transparentBorder: true
+                                color: Qt.rgba(0, 0, 0, 0.4)
+                                radius: 4
+                                samples: 9
+                                verticalOffset: 1
+                            }
 
                             Behavior on x {
                                 NumberAnimation {

@@ -75,25 +75,6 @@ def color_distance(c1, c2):
     return (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2
 
 
-def blend_colors(color1, color2, weight):
-    r1, g1, b1 = int(color1[1:3], 16), int(color1[3:5], 16), int(color1[5:7], 16)
-    r2, g2, b2 = int(color2[1:3], 16), int(color2[3:5], 16), int(color2[5:7], 16)
-    r = clamp_rgb(r1 * (1.0 - weight) + r2 * weight)
-    g = clamp_rgb(g1 * (1.0 - weight) + g2 * weight)
-    b = clamp_rgb(b1 * (1.0 - weight) + b2 * weight)
-    return to_hex(r, g, b)
-
-
-def darken_color(color_hex, factor):
-    r = int(color_hex[1:3], 16)
-    g = int(color_hex[3:5], 16)
-    b = int(color_hex[5:7], 16)
-    r = clamp_rgb(r / factor)
-    g = clamp_rgb(g / factor)
-    b = clamp_rgb(b / factor)
-    return to_hex(r, g, b)
-
-
 def main():
     if len(sys.argv) < 2:
         print("Usage: generate_theme.py <image_path>")
@@ -106,9 +87,9 @@ def main():
 
     processing_path = image_path
     magick_path = image_path
-    
+
     ext = os.path.splitext(image_path)[1].lower()
-    if ext in ['.gif', '.webp']:
+    if ext in [".gif", ".webp"]:
         # Cache the extracted frame persistently in ~/.cache/quickshell/frames/
         # so subsequent runs with the same wallpaper skip extraction entirely.
         home = os.path.expanduser("~")
@@ -132,16 +113,35 @@ def main():
                 # GdkPixbuf loads just the first frame natively and efficiently.
                 # ffmpeg also doesn't work — it can't decode animated WebP at all.
                 import gi
-                gi.require_version('GdkPixbuf', '2.0')
+
+                gi.require_version("GdkPixbuf", "2.0")
                 from gi.repository import GdkPixbuf
 
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
 
                 # Flatten alpha onto black background (matches static image processing)
                 if pixbuf.get_has_alpha():
-                    bg = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, pixbuf.get_width(), pixbuf.get_height())
+                    bg = GdkPixbuf.Pixbuf.new(
+                        GdkPixbuf.Colorspace.RGB,
+                        False,
+                        8,
+                        pixbuf.get_width(),
+                        pixbuf.get_height(),
+                    )
                     bg.fill(0x000000FF)
-                    pixbuf.composite(bg, 0, 0, pixbuf.get_width(), pixbuf.get_height(), 0, 0, 1.0, 1.0, GdkPixbuf.InterpType.BILINEAR, 255)
+                    pixbuf.composite(
+                        bg,
+                        0,
+                        0,
+                        pixbuf.get_width(),
+                        pixbuf.get_height(),
+                        0,
+                        0,
+                        1.0,
+                        1.0,
+                        GdkPixbuf.InterpType.BILINEAR,
+                        255,
+                    )
                     pixbuf = bg
 
                 pixbuf.savev(cached_frame, "jpeg", ["quality"], ["90"])
@@ -153,7 +153,9 @@ def main():
             processing_path = cached_frame
             magick_path = cached_frame
         else:
-            print("Warning: no cached frame available, using original file (may use high RAM).")
+            print(
+                "Warning: no cached frame available, using original file (may use high RAM)."
+            )
             processing_path = image_path
             magick_path = image_path
 
@@ -195,27 +197,7 @@ def main():
     is_dark = brightness <= 0.4
     palette = "dark" if is_dark else "light"
 
-    # 2. Run wallust with the appropriate palette option
-    try:
-        cmd = ["wallust", "run", "-s", "-p", palette, "--print-scheme", processing_path]
-        result = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
-        )
-    except subprocess.CalledProcessError as e:
-        print("Error running wallust:", e.stderr)
-        sys.exit(1)
-
-    hex_colors = []
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        if line.startswith("#") and (len(line) == 7 or len(line) == 9):
-            hex_colors.append(line[:7].lower())
-
-    if len(hex_colors) < 16:
-        print(f"Error: wallust returned only {len(hex_colors)} colors, expected 16.")
-        sys.exit(1)
-
-    # 3. Extract extra colors from ImageMagick histogram to get a rich sample and pixel counts
+    # 2. Extract colors from ImageMagick histogram to get a rich sample and pixel counts
     import re
 
     histogram_colors = {}
@@ -251,17 +233,9 @@ def main():
     except Exception as e:
         print("Warning: failed to extract colors from ImageMagick histogram:", e)
 
-    # 4. Merge and deduplicate, keeping wallust colors first (since color 0, 8, 15 are base choices)
-    seen = set()
-    unique_hex = []
-    for c in hex_colors:
-        if c not in seen:
-            seen.add(c)
-            unique_hex.append(c)
-    for c in histogram_colors.keys():
-        if c not in seen:
-            seen.add(c)
-            unique_hex.append(c)
+    # 3. Sort histogram colors by frequency
+    sorted_hist = sorted(histogram_colors.items(), key=lambda x: x[1], reverse=True)
+    unique_hex = [c[0] for c in sorted_hist]
 
     # Convert all to HSL and assign pixel counts
     color_objs = []
@@ -271,17 +245,7 @@ def main():
         b = int(hex_c[5:7], 16)
         h, s, l = rgb_to_hsl(r, g, b)
 
-        # Get pixels from histogram
-        if hex_c in histogram_colors:
-            pixels = histogram_colors[hex_c]
-        else:
-            if histogram_colors:
-                closest_hex = min(
-                    histogram_colors.keys(), key=lambda hc: color_distance(hc, hex_c)
-                )
-                pixels = histogram_colors[closest_hex]
-            else:
-                pixels = 1
+        pixels = histogram_colors[hex_c]
 
         color_objs.append(
             {
@@ -296,40 +260,61 @@ def main():
             }
         )
 
+    if not color_objs:
+        print("Error: ImageMagick returned no colors.")
+        sys.exit(1)
+
     # Base colors
     bg_color = color_objs[0]
-    fg_color = color_objs[min(15, len(color_objs) - 1)]
-    muted_color = color_objs[min(8, len(color_objs) - 1)]
 
-    # Accent candidates (all colors except bg/fg to prevent bg bleeding into accents)
-    accent_candidates = [
-        c for c in color_objs if c["hex"] not in [bg_color["hex"], fg_color["hex"]]
-    ]
-    if not accent_candidates:
-        accent_candidates = color_objs
+    # Calculate image colorfulness directly from the raw ImageMagick histogram
+    # to avoid Wallust's forced ANSI colors skewing the result.
+    total_colorful_px = 0
+    total_px = 0
 
-    # Calculate ratios and classify dominant theme
-    total_colorful_pixels = sum(
-        c["pixels"] for c in color_objs if get_chroma(c) >= 0.08
-    )
-    total_neutral_pixels = sum(c["pixels"] for c in color_objs if get_chroma(c) < 0.08)
-    total_pixels = total_colorful_pixels + total_neutral_pixels
-    colorful_pixel_ratio = (
-        total_colorful_pixels / total_pixels if total_pixels > 0 else 0.0
-    )
+    # This ignores deep shadows (L < 0.20) which often contain WebP/JPEG compression artifacts (like fake red).
+    # We also ignore pixels with >15% chroma (too saturated for a grayscale image) and noise (<0.5% of pixels).
+    best_tint_hue = 0.0
+    max_tint_chroma = -1.0
 
-    is_dominantly_colorful = colorful_pixel_ratio >= 0.15
+    total_px_count = sum(histogram_colors.values())
+
+    for hex_c, count in histogram_colors.items():
+        hr, hg, hb = int(hex_c[1:3], 16), int(hex_c[3:5], 16), int(hex_c[5:7], 16)
+        h, s, l = rgb_to_hsl(hr, hg, hb)
+        hchroma = (max(hr, hg, hb) - min(hr, hg, hb)) / 255.0
+
+        if (
+            l > 0.20
+            and l < 0.90
+            and hchroma < 0.15
+            and (count / total_px_count) > 0.005
+        ):
+            if hchroma > max_tint_chroma:
+                max_tint_chroma = hchroma
+                best_tint_hue = h
+
+        if hchroma >= 0.08:
+            total_colorful_px += count
+        total_px += count
+
+    colorful_ratio = total_colorful_px / total_px if total_px > 0 else 0.0
+    is_grayscale_image = colorful_ratio < 0.05
 
     # Find most frequent colorful candidate
     colorful_candidates = [c for c in color_objs if get_chroma(c) >= 0.08]
-    if colorful_candidates:
+    if is_grayscale_image:
+        dominant_cand = None
+        dominant_hue = best_tint_hue
+        dominant_sat = 0.15
+    elif colorful_candidates:
         dominant_cand = max(colorful_candidates, key=lambda c: c["pixels"])
         dominant_hue = dominant_cand["h"]
         dominant_sat = dominant_cand["s"]
     else:
         dominant_cand = None
-        dominant_hue = 0.0
-        dominant_sat = 0.0
+        dominant_hue = true_dom_h
+        dominant_sat = 0.15
 
     # Generate background, foreground, and muted colors based on wallpaper
     bg_s = max(0.10, min(0.20, dominant_sat * 0.5))
@@ -342,15 +327,22 @@ def main():
     top_colors = sorted_by_pixels[:10]
 
     colorful_top = [c for c in top_colors if get_chroma(c) >= 0.08]
-    if colorful_top:
+    if colorful_top and not is_grayscale_image:
         primary_accent = max(colorful_top, key=get_chroma)
     else:
         primary_accent = top_colors[0]
 
-    is_grayscale_theme = get_chroma(primary_accent) < 0.08
+    is_grayscale_theme = (get_chroma(primary_accent) < 0.08) or is_grayscale_image
 
     if is_grayscale_theme:
-        accent_color = force_hsl(0, 0.0, 0.0, 0.0, 0.95 if is_dark else 0.05)
+        if max_tint_chroma > 0.01:
+            # The grayscale image has a subtle tint (e.g. cyan glow). Amplify it!
+            accent_color = force_hsl(
+                dominant_hue, 0.40, 0.0, 0.40, 0.80 if is_dark else 0.40
+            )
+        else:
+            # The image is purely black and white. Use pure grey/white.
+            accent_color = force_hsl(0, 0.0, 0.0, 0.0, 0.95 if is_dark else 0.05)
     else:
         accent_color = force_hsl(
             primary_accent["h"],
@@ -363,15 +355,6 @@ def main():
     # Text colors slightly tinted with the wallpaper hue for better integration
     fg_val = force_hsl(dominant_hue, bg_s, 0.5, bg_s * 0.3, 0.92 if is_dark else 0.12)
 
-    muted_val = force_hsl(
-        dominant_hue, bg_s, 0.5, bg_s * 0.5, 0.65 if is_dark else 0.45
-    )
-
-    # Border color matching the background hue but lighter/darker
-    border_val = force_hsl(
-        dominant_hue, bg_s, 0.5, bg_s * 0.8, 0.14 if is_dark else 0.82
-    )
-
     h_acc, s_acc, l_acc = rgb_to_hsl(
         int(accent_color[1:3], 16),
         int(accent_color[3:5], 16),
@@ -380,16 +363,11 @@ def main():
     # Using a 45 degree hue shift for gradients as true complementary (+180) creates muddy middle colors
     accent_complementary = force_hsl((h_acc + 45) % 360, s_acc, l_acc, s_acc, l_acc)
 
-    shadow_val = force_hsl(dominant_hue, bg_s, bg_color["l"], bg_s, 0.02)
-
     generated = {
         "bg": bg_val,
         "fg": fg_val,
-        "muted": muted_val,
-        "border": border_val,
         "accent": accent_color,
         "accentComplementary": accent_complementary,
-        "shadow": shadow_val,
     }
 
     # Save to quickshell cache
@@ -433,7 +411,6 @@ def main():
 
     # Always emit colors to stdout so QML can apply them immediately without a second cat
     print("COLORS:" + json.dumps(wallpaper_generated))
-
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
 
 **A custom Hyprland environment for Arch Linux, built around dynamic theming and Quickshell.**
 
-<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784959751/output_ubfvlc.gif" alt="Preview" />
+<img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786064817/output_sthtxe.webp" alt="Preview" />
 
 </div>
 
@@ -93,34 +93,37 @@ This rice features a collection of custom widgets built with Quickshell, designe
   - **Dashboard**: GitHub stats (including top repo), media player, package updates, and a random quote.
   - **Performance**: Real-time monitoring for CPU, RAM, VRAM, and Disk usage.
   - **Activity**: Daily screen time tracking and your top 5 most used applications.
-    <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784959934/output_ywiy7w.gif" alt="Main Panel Widget" />
-
-- **Wallpaper Selector**: An interactive grid browser that lets you preview and apply wallpapers from `~/Pictures/Wallpapers/` on the fly.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960041/Shot-2026-07-25-011333_pf5obb.png" alt="Wallpaper Selector Widget" />
-
-- **Application Launcher**: A clean, keyboard-navigable menu to search and run applications.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960130/Shot-2026-07-25-011503_xwkkzn.png" alt="Application Launcher Widget" />
-
-- **Clipboard History**: A handy widget to browse and paste from your clipboard history.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960192/Shot-2026-07-25-011605_vagu0f.png" alt="Clipboard History Widget" />
-
-- **Lock Screen**: A fully functional custom lock screen built entirely in Quickshell, fully integrated with your dynamic theme.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960244/Shot-2026-07-25-011657_n2zehm.png" alt="Lock Screen Widget" />
-
-- **Sidebar**: A unified control center featuring quick settings, performance modes and desktop notifications.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960299/Shot-2026-07-25-011753_heeu1y.png" alt="Sidebar Widget" />
+    <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786064956/output_rzqhid.webp" alt="Main Panel Widget" />
 
 - **Settings App**: A dedicated graphical interface to configure your rice, credentials, and preferences effortlessly without manually editing files.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960346/Shot-2026-07-25-011844_i9st28.png" alt="Settings App" />
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065403/Shot-2026-08-06-201609_biioiv.png" alt="Settings App" />
 
-- **Screen Capture**: A dedicated tool for taking screenshots and recording your screen.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960406/Shot-2026-07-25-011946_rjobsf.png" alt="Screen Capture Widget" />
+- **Lock Screen**: A fully functional custom lock screen built entirely in Quickshell, fully integrated with your dynamic theme.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065276/Shot-2026-08-06-201413_s6pdnd.png" alt="Lock Screen Widget" />
+
+- **Keybinds Cheat Sheet**: A built-in, searchable overlay that displays all your configured shortcuts directly on your desktop.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065694/Shot-2026-08-06-202115_thcy6l.png" alt="Keybinds Cheat Sheet Widget" />
+
+- **Wallpaper Selector**: An interactive grid browser that lets you preview and apply wallpapers from `~/Pictures/Wallpapers/` on the fly.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065056/Shot-2026-08-06-201025_snexor.png" alt="Wallpaper Selector Widget" />
+
+- **Sidebar**: A unified control center featuring quick settings, performance modes and desktop notifications.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065349/Shot-2026-08-06-201526_s0kvt6.png" alt="Sidebar Widget" />
+
+- **Application Launcher**: A clean, keyboard-navigable menu to search and run applications.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065112/Shot-2026-08-06-201135_taednb.png" alt="Application Launcher Widget" />
 
 - **Package Manager**: A graphical utility to search, install, update, and remove official Arch Linux and AUR packages easily.
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960444/Shot-2026-07-25-012024_azxodc.png" alt="Package Manager Widget" />
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065503/Shot-2026-08-06-201806_urpbrj.png" alt="Package Manager Widget" />
+
+- **Clipboard History**: A handy widget to browse and paste from your clipboard history.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065192/Shot-2026-08-06-201251_dch65w.png" alt="Clipboard History Widget" />
+
+- **Screen Capture**: A dedicated tool for taking screenshots and recording your screen.
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065442/Shot-2026-08-06-201705_shhppn.png" alt="Screen Capture Widget" />
 
 - **Power Menu**: A sleek menu for session management (shutdown, reboot, suspend, lock, logout).
-  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1784960488/Shot-2026-07-25-012106_lovz7x.png" alt="Power Menu Widget" />
+  <img src="https://res.cloudinary.com/diu2godjy/image/upload/v1786065544/Shot-2026-08-06-201847_mu6ewf.png" alt="Power Menu Widget" />
 
 ## ⌨️ Keybinds
 
@@ -187,3 +190,4 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE).
 - **Tabler Icons**: Licensed under the [MIT License](https://github.com/tabler/tabler-icons/blob/master/LICENSE).
 - **Material Symbols (Google Fonts)**: Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 - **Material GNOME Theme**: Licensed under the [GNU General Public License v3.0](https://github.com/SakibShahariar/material-gnome-theme/blob/main/LICENSE).
+- **Simple Icons**: Licensed under the [CC0 1.0 Universal License](https://creativecommons.org/publicdomain/zero/1.0/).

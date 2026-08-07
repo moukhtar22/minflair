@@ -1,11 +1,12 @@
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import qs.Core
+import qs.Core.Utils
 
 Rectangle {
     id: bgRect
 
-    property bool isDark: (Theme.bg.r * 0.299 + Theme.bg.g * 0.587 + Theme.bg.b * 0.114) < 0.5
+    property bool isDark: ColorUtils.isDark(Theme.bg)
 
     color: Theme.bg
     opacity: 1

@@ -98,9 +98,8 @@ Item {
                 NumberAnimation {
                     target: root
                     property: "bounceProgress"
-                    duration: Constants.animExpressive
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.6
+                    duration: root.animationDuration
+                    easing.type: Easing.OutExpo
                 }
 
             }
@@ -210,9 +209,9 @@ Item {
         width: smoothWidth
         height: smoothHeight
         x: root.overshootHeadroom
-        y: -Constants.size4Xl * (1 - openProgress)
+        y: 0
         opacity: openProgress
-        scale: 0.85 + (0.15 * bounceProgress)
+        scale: bounceProgress
         transformOrigin: Item.Top
 
         HoverHandler {

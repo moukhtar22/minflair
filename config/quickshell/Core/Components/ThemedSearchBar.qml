@@ -8,7 +8,7 @@ FocusScope {
 
     property alias text: searchInput.text
     property string placeholderText: "Search..."
-    property int preferredHeight: Constants.size3Xl
+    property int preferredHeight: Constants.size4Xl
     property bool showClearButton: true
     property alias textField: searchInput
 
@@ -38,14 +38,13 @@ FocusScope {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: Constants.sizeSm
-        anchors.rightMargin: Constants.sizeSm
-        spacing: Constants.sizeXs
+        anchors.leftMargin: Constants.sizeLg
+        anchors.rightMargin: Constants.sizeLg
 
         SvgIcon {
             icon: "search"
             iconColor: Theme.muted
-            iconSize: Constants.sizeMd
+            iconSize: Constants.sizeLg
             flat: true
         }
 

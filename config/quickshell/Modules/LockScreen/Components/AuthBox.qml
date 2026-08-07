@@ -185,6 +185,7 @@ Rectangle {
                     anchors.fill: parent
                     source: "file://" + Quickshell.env("HOME") + "/.face"
                     fillMode: Image.PreserveAspectCrop
+                    mipmap: true
                     visible: status === Image.Ready
                     asynchronous: true
                     layer.enabled: true

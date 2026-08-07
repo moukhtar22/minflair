@@ -116,12 +116,10 @@ CenterWindow {
         id: searchField
 
         Layout.fillWidth: true
-        preferredHeight: 40
         placeholderText: "Search wallpapers..."
         onSearchRequested: (text) => {
             return root.filterWallpapers(text);
         }
-        textField.font.pixelSize: Constants.sizeMd
         textField.Keys.onPressed: function(event) {
             if (event.key === Qt.Key_Right) {
                 if (wallView.count > 0) {
@@ -160,46 +158,18 @@ CenterWindow {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        ColumnLayout {
+        GhostEmptyState {
             anchors.centerIn: parent
             visible: filteredModel.count === 0 && searchField.text === ""
-
-            SvgIcon {
-                icon: "ghost"
-                iconColor: Theme.muted
-                iconSize: 72
-                flat: true
-                Layout.alignment: Qt.AlignHCenter
-            }
-
-            ThemedText {
-                text: "No wallpapers found in ~/Pictures/Wallpapers"
-                color: Theme.muted
-                font.pixelSize: Constants.sizeMd
-                Layout.alignment: Qt.AlignHCenter
-            }
-
+            text: "No wallpapers found in ~/Pictures/Wallpapers"
+            isAnimating: visible
         }
 
-        ColumnLayout {
+        GhostEmptyState {
             anchors.centerIn: parent
             visible: filteredModel.count === 0 && searchField.text !== ""
-
-            SvgIcon {
-                icon: "ghost"
-                iconColor: Theme.muted
-                iconSize: 72
-                flat: true
-                Layout.alignment: Qt.AlignHCenter
-            }
-
-            ThemedText {
-                text: "No matches found"
-                color: Theme.muted
-                font.pixelSize: Constants.sizeMd
-                Layout.alignment: Qt.AlignHCenter
-            }
-
+            text: "No matches found"
+            isAnimating: visible
         }
 
         GridView {
@@ -301,6 +271,7 @@ CenterWindow {
                             asynchronous: true
                             cache: true
                             sourceSize: Qt.size(400, 300)
+                            mipmap: true
                         }
 
                         layer.effect: OpacityMask {
@@ -309,13 +280,20 @@ CenterWindow {
 
                     }
 
-                    Rectangle {
+                    Item {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         anchors.right: parent.right
+                        anchors.margins: isCurrent ? 2 : 1
                         height: nameText.contentHeight + Constants.sizeXs
-                        color: Theme.bg
-                        radius: Constants.sizeLg
+                        clip: true
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.topMargin: -Constants.sizeLg
+                            color: Theme.bg
+                            radius: Constants.sizeLg
+                        }
 
                         ThemedText {
                             id: nameText

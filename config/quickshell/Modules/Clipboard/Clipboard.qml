@@ -277,46 +277,18 @@ CenterWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            ColumnLayout {
+            GhostEmptyState {
                 anchors.centerIn: parent
                 visible: filteredModel.count === 0 && searchField.text === ""
-
-                SvgIcon {
-                    icon: "ghost"
-                    iconColor: Theme.muted
-                    iconSize: 72
-                    flat: true
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                ThemedText {
-                    text: "Clipboard is empty"
-                    color: Theme.muted
-                    font.pixelSize: Constants.sizeMd
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
+                text: "Clipboard is empty"
+                isAnimating: visible
             }
 
-            ColumnLayout {
+            GhostEmptyState {
                 anchors.centerIn: parent
                 visible: filteredModel.count === 0 && searchField.text !== ""
-
-                SvgIcon {
-                    icon: "ghost"
-                    iconColor: Theme.muted
-                    iconSize: 72
-                    flat: true
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                ThemedText {
-                    text: "No results found"
-                    color: Theme.muted
-                    font.pixelSize: Constants.sizeMd
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
+                text: "No results found"
+                isAnimating: visible
             }
 
             ListView {
@@ -426,8 +398,6 @@ CenterWindow {
                         anchors.fill: parent
                         radius: Constants.sizeLg
                         color: Theme.bgSecondary
-                        border.color: Theme.accent
-                        border.width: 1
 
                         Rectangle {
                             anchors.left: parent.left
@@ -511,8 +481,6 @@ CenterWindow {
                                 anchors.fill: parent
                                 radius: Constants.sizeLg
                                 color: Theme.bgSecondary
-                                border.color: isCurrent ? Theme.accent : Theme.border
-                                border.width: 1
                                 clip: true
 
                                 Image {
@@ -521,6 +489,8 @@ CenterWindow {
                                     source: parent.parent.visible ? "file:///tmp/quickshell-clipboard/" + model.itemId + ".png" : ""
                                     asynchronous: true
                                     fillMode: Image.PreserveAspectFit
+                                    sourceSize: Qt.size(320, 160)
+                                    mipmap: true
                                 }
 
                             }

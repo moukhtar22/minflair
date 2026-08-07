@@ -13,6 +13,8 @@ FocusScope {
     property bool revealPassword: false
     property alias textField: textInput
 
+    signal editingFinished()
+
     Layout.fillWidth: true
     Layout.preferredHeight: (label !== "" ? 20 + Constants.sizeXs : 0) + 36
 
@@ -55,6 +57,7 @@ FocusScope {
                     selectByMouse: true
                     echoMode: (root.isPassword && !root.revealPassword) ? TextInput.Password : TextInput.Normal
                     background: null
+                    onEditingFinished: root.editingFinished()
                 }
 
                 SvgIconButton {

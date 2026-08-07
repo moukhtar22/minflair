@@ -25,7 +25,7 @@ hl.config({
 		},
 	},
 	decoration = {
-		rounding = 16,
+		rounding = 32,
 		rounding_power = 2,
 		active_opacity = 1.00,
 		inactive_opacity = 1.00,
@@ -45,6 +45,9 @@ hl.config({
 			popups_ignorealpha = 0.2,
 			input_methods = true,
 			special = true,
+		},
+		shadow = {
+			enabled = false,
 		},
 	},
 	dwindle = {

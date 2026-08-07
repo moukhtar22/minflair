@@ -48,7 +48,6 @@ Card {
         }];
     }
 
-    useBorder: false
     backgroundColor: Theme.bgSecondary
 
     ColumnLayout {
