@@ -75,12 +75,6 @@ CenterWindow {
             shotMode: "area_delay"
         }
 
-        ListElement {
-            label: "Area to Clipboard"
-            iconSource: "󰆏"
-            shotMode: "clipboard"
-        }
-
     }
 
     ColumnLayout {

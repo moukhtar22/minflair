@@ -4,6 +4,7 @@ export WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-1}
 export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 export XDG_CURRENT_DESKTOP=Hyprland
 
+LOG="/dev/null"
 MODE="$1"
 DIR="$HOME/Pictures/Screenshots"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
