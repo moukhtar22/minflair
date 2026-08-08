@@ -8,7 +8,6 @@ MODE="$1"
 DIR="$HOME/Pictures/Screenshots"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 FILENAME="$DIR/Shot-${TIMESTAMP}.png"
-LOG="/tmp/screenshot_debug.log"
 
 mkdir -p "$DIR"
 
@@ -33,12 +32,12 @@ take_screenshot() {
 
   case "$1" in
   "full")
-    grim "$FILENAME" >>"$LOG" 2>&1
+    grim "$FILENAME"
     ;;
 
   "area" | "select")
     TEMP_FULL="/tmp/screenshot_temp_full.png"
-    grim "$TEMP_FULL" >>"$LOG" 2>&1
+    grim "$TEMP_FULL"
 
     TIMEOUT=20
     COUNT=0
@@ -63,9 +62,9 @@ take_screenshot() {
         W="${BASH_REMATCH[3]}"
         H="${BASH_REMATCH[4]}"
         CROP_GEOM="${W}x${H}+${X}+${Y}"
-        convert "$TEMP_FULL" -crop "$CROP_GEOM" +repage "$FILENAME" >>"$LOG" 2>&1
+        convert "$TEMP_FULL" -crop "$CROP_GEOM" +repage "$FILENAME"
       else
-        grim -g "$GEOM" "$FILENAME" >>"$LOG" 2>&1
+        grim -g "$GEOM" "$FILENAME"
       fi
       rm -f "$TEMP_FULL"
     else
@@ -83,7 +82,7 @@ take_screenshot() {
     WIN_H=$(echo "$RAW_JSON" | jq -r '.size[1]')
 
     if [ -n "$WINDOW_GEOMETRY" ] && [ "$WINDOW_GEOMETRY" != "null" ]; then
-      grim -g "$WINDOW_GEOMETRY" "$FILENAME" >>"$LOG" 2>&1
+      grim -g "$WINDOW_GEOMETRY" "$FILENAME"
 
       ROUNDING=$(hyprctl getoption decoration:rounding | awk '/int:/ {print $2}')
       ROUNDING=${ROUNDING:-10}
@@ -98,7 +97,7 @@ take_screenshot() {
         -alpha off \
         -compose CopyOpacity \
         -composite \
-        PNG32:"$FILENAME" >>"$LOG" 2>&1
+        PNG32:"$FILENAME"
     else
       return 1
     fi
@@ -137,7 +136,7 @@ case "$MODE" in
   ;;
 "clipboard")
   TEMP_FULL="/tmp/screenshot_temp_full.png"
-  grim "$TEMP_FULL" >>"$LOG" 2>&1
+  grim "$TEMP_FULL"
 
   GEOM=$(slurp -d 2>>"$LOG")
   if [ -n "$GEOM" ] && [ -f "$TEMP_FULL" ]; then

@@ -130,6 +130,7 @@ color16 {bgSecondary}
     os.makedirs(kitty_dir, exist_ok=True)
     with open(os.path.join(kitty_dir, "theme.conf"), "w") as f:
         f.write(kitty_theme)
+
     subprocess.run("kill -SIGUSR1 $(pidof kitty) 2>/dev/null", shell=True)
 
     # 2. GTK

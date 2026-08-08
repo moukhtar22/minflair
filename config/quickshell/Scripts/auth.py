@@ -22,13 +22,6 @@ if __name__ == "__main__":
     else:
         password = sys.stdin.read().rstrip("\n")
 
-    with open("/tmp/auth_debug.log", "w") as f:
-        f.write(f"Received password: '{password}'\n")
-        res = authenticate(password)
-        f.write(
-            f"Result: {res} | User: {getpass.getuser()} | Env: {dict(os.environ)}\n"
-        )
-
     if authenticate(password):
         sys.exit(0)
     else:

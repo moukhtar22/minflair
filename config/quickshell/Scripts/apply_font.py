@@ -47,3 +47,18 @@ for qtct in ["qt5ct", "qt6ct"]:
         config["Fonts"]["general"] = f'"{font_str}"'
         with open(qtct_conf, "w") as configfile:
             config.write(configfile)
+
+# 5. Update Hyprland groupbar font
+import json
+
+update_script = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "update_hypr_prefs.py"
+)
+if os.path.exists(update_script):
+    hypr_args = {
+        "group": {
+            "groupbar": {"font_family": f'"{font_name}"', "font_size": int(font_size)}
+        }
+    }
+    subprocess.run(["python3", update_script, json.dumps(hypr_args)])
+    subprocess.run(["hyprctl", "reload"])

@@ -202,8 +202,11 @@ SettingContainer {
                 return idx !== -1 ? idx : 0;
             }
             onActivated: (index) => {
-                appearanceRoot.currentFontName = model[index];
-                appearanceRoot.applyFont();
+                let newFont = model[index];
+                if (appearanceRoot.currentFontName !== newFont) {
+                    appearanceRoot.currentFontName = newFont;
+                    appearanceRoot.applyFont();
+                }
             }
         }
 
@@ -217,8 +220,11 @@ SettingContainer {
             suffix: " pt"
             decimals: 0
             onMoved: (val) => {
-                appearanceRoot.currentFontSize = Math.round(val);
-                appearanceRoot.applyFont();
+                let newSize = Math.round(val);
+                if (appearanceRoot.currentFontSize !== newSize) {
+                    appearanceRoot.currentFontSize = newSize;
+                    appearanceRoot.applyFont();
+                }
             }
         }
 
