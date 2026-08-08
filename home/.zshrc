@@ -129,8 +129,9 @@ fi
 alias cat="bat --theme=base16"
 alias ls='eza --icons=always --color=always -a'
 alias ll='eza --icons=always --color=always -la'
+alias clear='command clear; unset _NEW_LINE_BEFORE_PROMPT'
 alias cls='clear'
-alias fastfetch='clear && fastfetch'
+alias fastfetch='command clear && fastfetch'
 alias update='sudo pacman -Syu --noconfirm && yay -Syu --noconfirm'
 
 #  ┌─┐┬ ┬┌┬┐┌─┐  ┌─┐┌┬┐┌─┐┬─┐┌┬┐
@@ -142,3 +143,13 @@ eval "$(starship init zsh)"
 eval "$(fnm env --use-on-cd --shell zsh)"
 
 # pokemon-colorscripts -r --no-title
+
+# Add an empty line before each prompt, except the first one
+function add_newline_precmd() {
+    if [[ -z "$_NEW_LINE_BEFORE_PROMPT" ]]; then
+        _NEW_LINE_BEFORE_PROMPT=1
+    else
+        print ""
+    fi
+}
+add-zsh-hook precmd add_newline_precmd
