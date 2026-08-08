@@ -60,14 +60,14 @@ Item {
                         }, {
                             "id": "balanced",
                             "name": "Balanced",
-                            "desc": "CPU balanced profile. Brightness set to 75%. Enables standard animations, blur, and shadows. Widget updates every 2s.",
+                            "desc": "CPU balanced profile. Brightness set to 75%. Restores Hyprland configuration. Widget updates every 2s.",
                             "icon": "balance"
                         }];
                         if (SystemInfoService.hasPerformanceProfile)
                             profiles.push({
                             "id": "performance",
                             "name": "Performance",
-                            "desc": "CPU performance profile. Brightness set to 100%. Maximum animations, blur, and shadows. Widget updates every 1s.",
+                            "desc": "CPU performance profile. Brightness set to 100%. Restores Hyprland configuration. Widget updates every 1s.",
                             "icon": "rocket"
                         });
 

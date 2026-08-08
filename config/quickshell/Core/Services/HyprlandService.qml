@@ -58,17 +58,31 @@ Item {
         applySettingsTimer.restart();
     }
 
-    function setAnimationsEnabled(enabled, blur, dropShadow, rounding) {
+    function setPowerSaverMode(enabled) {
         animationsProc.running = false;
-        let luaStr = "hl.config({ animations = { enabled = " + (enabled ? "true" : "false") + " }, decoration = { blur = { enabled = " + (blur == "1" ? "true" : "false") + " }, shadow = { enabled = " + (dropShadow == "1" ? "true" : "false") + " }, rounding = " + rounding + " } })";
-        animationsProc.command = ["hyprctl", "eval", luaStr];
-        animationsProc.running = true;
+        if (enabled) {
+            let jsonArgs = {
+                "animations": {
+                    "enabled": false
+                },
+                "decoration": {
+                    "rounding": 0,
+                    "blur": {
+                        "enabled": false
+                    },
+                    "shadow": {
+                        "enabled": false
+                    }
+                }
+            };
+            animationsProc.command = ["sh", "-c", "python3 ~/.config/quickshell/Scripts/update_hypr_prefs.py '" + JSON.stringify(jsonArgs) + "'"];
+            animationsProc.running = true;
+        } else {
+            applyHyprlandSettings();
+        }
     }
 
     function startupAnimations() {
-        animationsProc.running = false;
-        animationsProc.command = ["hyprctl", "eval", "hl.config({ animations = { enabled = " + (enableAnimations ? "true" : "false") + " } })"];
-        animationsProc.running = true;
         applyHyprlandSettings();
     }
 
@@ -78,10 +92,17 @@ Item {
 
     onEnableAnimationsChanged: {
         if (SettingsService.settingsLoaded) {
-            SettingsService.saveSettings();
             animationsProc.running = false;
             animationsProc.command = ["hyprctl", "eval", "hl.config({ animations = { enabled = " + (enableAnimations ? "true" : "false") + " } })"];
             animationsProc.running = true;
+            let jsonArgs = {
+                "animations": {
+                    "enabled": enableAnimations
+                }
+            };
+            patchUserPrefsProc.command = ["sh", "-c", "python3 ~/.config/quickshell/Scripts/update_hypr_prefs.py '" + JSON.stringify(jsonArgs) + "'"];
+            patchUserPrefsProc.running = false;
+            patchUserPrefsProc.running = true;
         }
     }
     onNightLightActiveChanged: {
@@ -235,6 +256,9 @@ Item {
             applyHyprlandSettings();
         }
     }
+    Component.onCompleted: {
+        readHyprPrefsProc.running = true;
+    }
 
     Timer {
         id: applySettingsTimer
@@ -244,11 +268,32 @@ Item {
         onTriggered: {
             let ao = (hyprActiveOpacity / 100).toFixed(2);
             let io = (hyprInactiveOpacity / 100).toFixed(2);
-            let luaStr = "hl.config({ decoration = { blur = { enabled = " + (hyprBlur ? "true" : "false") + ", size = " + hyprBlurSize + ", passes = " + hyprBlurPasses + " }, rounding = " + hyprRounding + ", active_opacity = " + ao + ", inactive_opacity = " + io + ", shadow = { enabled = " + (hyprShadow ? "true" : "false") + ", range = " + hyprShadowRange + ", render_power = " + hyprShadowRenderPower + " } }, general = { gaps_in = " + hyprGapsIn + ", gaps_out = " + hyprGapsOut + ", border_size = " + hyprBorderSize + " } })";
-            setHyprlandOptionProc.command = ["sh", "-c", "hyprctl eval '" + luaStr + "'"];
-            setHyprlandOptionProc.running = false;
-            setHyprlandOptionProc.running = true;
-            patchUserPrefsProc.command = ["sh", "-c", "sed -i 's/active_opacity = [0-9.]*/active_opacity = " + ao + "/' ~/.config/hypr/userprefs.lua && " + "sed -i 's/inactive_opacity = [0-9.]*/inactive_opacity = " + io + "/' ~/.config/hypr/userprefs.lua"];
+            let jsonArgs = {
+                "animations": {
+                    "enabled": enableAnimations
+                },
+                "general": {
+                    "gaps_in": hyprGapsIn,
+                    "gaps_out": hyprGapsOut,
+                    "border_size": hyprBorderSize
+                },
+                "decoration": {
+                    "rounding": hyprRounding,
+                    "active_opacity": parseFloat(ao),
+                    "inactive_opacity": parseFloat(io),
+                    "blur": {
+                        "enabled": hyprBlur,
+                        "size": hyprBlurSize,
+                        "passes": hyprBlurPasses
+                    },
+                    "shadow": {
+                        "enabled": hyprShadow,
+                        "range": hyprShadowRange,
+                        "render_power": hyprShadowRenderPower
+                    }
+                }
+            };
+            patchUserPrefsProc.command = ["sh", "-c", "python3 ~/.config/quickshell/Scripts/update_hypr_prefs.py '" + JSON.stringify(jsonArgs) + "'"];
             patchUserPrefsProc.running = false;
             patchUserPrefsProc.running = true;
         }
@@ -331,6 +376,64 @@ Item {
                 if (hyprlandService.keyboardLayout !== code)
                     hyprlandService.keyboardLayout = code;
 
+            }
+        }
+
+    }
+
+    Process {
+        id: readHyprPrefsProc
+
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/Scripts/read_hypr_prefs.py"]
+
+        stdout: SplitParser {
+            onRead: (data) => {
+                if (data && data.trim() !== "") {
+                    try {
+                        let prefs = JSON.parse(data.trim());
+                        if (prefs["decoration:blur:enabled"] !== undefined)
+                            hyprBlur = prefs["decoration:blur:enabled"];
+
+                        if (prefs["decoration:rounding"] !== undefined)
+                            hyprRounding = prefs["decoration:rounding"];
+
+                        if (prefs["decoration:active_opacity"] !== undefined)
+                            hyprActiveOpacity = Math.round(prefs["decoration:active_opacity"] * 100);
+
+                        if (prefs["decoration:inactive_opacity"] !== undefined)
+                            hyprInactiveOpacity = Math.round(prefs["decoration:inactive_opacity"] * 100);
+
+                        if (prefs["decoration:blur:size"] !== undefined)
+                            hyprBlurSize = prefs["decoration:blur:size"];
+
+                        if (prefs["decoration:blur:passes"] !== undefined)
+                            hyprBlurPasses = prefs["decoration:blur:passes"];
+
+                        if (prefs["general:gaps_in"] !== undefined)
+                            hyprGapsIn = prefs["general:gaps_in"];
+
+                        if (prefs["general:gaps_out"] !== undefined)
+                            hyprGapsOut = prefs["general:gaps_out"];
+
+                        if (prefs["general:border_size"] !== undefined)
+                            hyprBorderSize = prefs["general:border_size"];
+
+                        if (prefs["decoration:shadow:enabled"] !== undefined)
+                            hyprShadow = prefs["decoration:shadow:enabled"];
+
+                        if (prefs["decoration:shadow:range"] !== undefined)
+                            hyprShadowRange = prefs["decoration:shadow:range"];
+
+                        if (prefs["decoration:shadow:render_power"] !== undefined)
+                            hyprShadowRenderPower = prefs["decoration:shadow:render_power"];
+
+                        if (prefs["animations:enabled"] !== undefined)
+                            enableAnimations = prefs["animations:enabled"];
+
+                    } catch (e) {
+                        console.error("Error parsing hypr prefs: " + e);
+                    }
+                }
             }
         }
 

@@ -79,7 +79,6 @@ Item {
                 "packageManagerChecksEnabled": UpdateService.packageManagerChecksEnabled,
                 "packageManagerCheckInterval": UpdateService.packageManagerCheckInterval,
                 "clipboardMaxItems": settingsService.clipboardMaxItems,
-                "enableAnimations": HyprlandService.enableAnimations,
                 "animationSpeedFactor": HyprlandService.animationSpeedFactor,
                 "githubUsername": settingsService.githubUsername,
                 "githubToken": settingsService.githubToken,
@@ -97,18 +96,6 @@ Item {
                 "wpTransitionStep": HyprlandService.wpTransitionStep,
                 "wpTransitionFps": HyprlandService.wpTransitionFps,
                 "wpTransitionAngle": HyprlandService.wpTransitionAngle,
-                "hyprBlur": HyprlandService.hyprBlur,
-                "hyprRounding": HyprlandService.hyprRounding,
-                "hyprActiveOpacity": HyprlandService.hyprActiveOpacity,
-                "hyprInactiveOpacity": HyprlandService.hyprInactiveOpacity,
-                "hyprBlurSize": HyprlandService.hyprBlurSize,
-                "hyprBlurPasses": HyprlandService.hyprBlurPasses,
-                "hyprGapsIn": HyprlandService.hyprGapsIn,
-                "hyprGapsOut": HyprlandService.hyprGapsOut,
-                "hyprBorderSize": HyprlandService.hyprBorderSize,
-                "hyprShadow": HyprlandService.hyprShadow,
-                "hyprShadowRange": HyprlandService.hyprShadowRange,
-                "hyprShadowRenderPower": HyprlandService.hyprShadowRenderPower,
                 "micMuted": AudioService.micMuted,
                 "micVolume": AudioService.micVolume,
                 "quoteCategory": settingsService.quoteCategory,
@@ -154,9 +141,6 @@ Item {
 
                         if (prefs.clipboardMaxItems !== undefined)
                             settingsService.clipboardMaxItems = prefs.clipboardMaxItems;
-
-                        if (prefs.enableAnimations !== undefined)
-                            HyprlandService.enableAnimations = prefs.enableAnimations;
 
                         if (prefs.animationSpeedFactor !== undefined)
                             HyprlandService.animationSpeedFactor = prefs.animationSpeedFactor;
@@ -208,42 +192,6 @@ Item {
 
                         if (prefs.wpTransitionAngle !== undefined)
                             HyprlandService.wpTransitionAngle = prefs.wpTransitionAngle;
-
-                        if (prefs.hyprBlur !== undefined)
-                            HyprlandService.hyprBlur = prefs.hyprBlur;
-
-                        if (prefs.hyprRounding !== undefined)
-                            HyprlandService.hyprRounding = prefs.hyprRounding;
-
-                        if (prefs.hyprActiveOpacity !== undefined)
-                            HyprlandService.hyprActiveOpacity = prefs.hyprActiveOpacity;
-
-                        if (prefs.hyprInactiveOpacity !== undefined)
-                            HyprlandService.hyprInactiveOpacity = prefs.hyprInactiveOpacity;
-
-                        if (prefs.hyprBlurSize !== undefined)
-                            HyprlandService.hyprBlurSize = prefs.hyprBlurSize;
-
-                        if (prefs.hyprBlurPasses !== undefined)
-                            HyprlandService.hyprBlurPasses = prefs.hyprBlurPasses;
-
-                        if (prefs.hyprGapsIn !== undefined)
-                            HyprlandService.hyprGapsIn = prefs.hyprGapsIn;
-
-                        if (prefs.hyprGapsOut !== undefined)
-                            HyprlandService.hyprGapsOut = prefs.hyprGapsOut;
-
-                        if (prefs.hyprBorderSize !== undefined)
-                            HyprlandService.hyprBorderSize = prefs.hyprBorderSize;
-
-                        if (prefs.hyprShadow !== undefined)
-                            HyprlandService.hyprShadow = prefs.hyprShadow;
-
-                        if (prefs.hyprShadowRange !== undefined)
-                            HyprlandService.hyprShadowRange = prefs.hyprShadowRange;
-
-                        if (prefs.hyprShadowRenderPower !== undefined)
-                            HyprlandService.hyprShadowRenderPower = prefs.hyprShadowRenderPower;
 
                         HyprlandService.startupAnimations();
                         if (prefs.micVolume !== undefined) {

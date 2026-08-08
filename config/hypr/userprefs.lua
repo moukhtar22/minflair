@@ -18,8 +18,8 @@ hl.config({
 			["col.inactive"] = colors.border_alpha,
 			text_color = colors.accent_alpha,
 			text_color_inactive = colors.border_alpha,
-			font_size = 14,
-			font_family = "JetBrainsMono NF",
+			font_size = 12,
+			font_family = "Geist",
 			font_weight_active = "bold",
 			blur = true,
 		},
@@ -27,8 +27,8 @@ hl.config({
 	decoration = {
 		rounding = 32,
 		rounding_power = 2,
-		active_opacity = 1.00,
-		inactive_opacity = 1.00,
+		active_opacity = 1,
+		inactive_opacity = 1,
 		blur = {
 			enabled = true,
 			size = 6,
@@ -48,6 +48,8 @@ hl.config({
 		},
 		shadow = {
 			enabled = false,
+			range = 4,
+			render_power = 3,
 		},
 	},
 	dwindle = {
@@ -84,8 +86,7 @@ hl.config({
 			sensitivity = -0.5,
 		},
 	},
+	animations = {
+		enabled = true,
+	},
 })
-
--- The following line was commented out because it appears to be legacy/plugin syntax
--- and hl.keyword is no longer supported in Lua configurations:
--- gesture = 3, horizontal, workspace
