@@ -64,7 +64,7 @@ Item {
             brightnessProc.command = ["brightnessctl", "s", "100%"];
             brightnessProc.running = true;
             if (SettingsService.settingsLoaded)
-                HyprlandService.setAnimationsEnabled(true, 1, 1, 12);
+                HyprlandService.setPowerSaverMode(false);
 
         } else if (targetProfile === "power-saver") {
             systemInfoService.performanceInterval = 5000;
@@ -73,7 +73,7 @@ Item {
             brightnessProc.command = ["brightnessctl", "s", "15%"];
             brightnessProc.running = true;
             if (SettingsService.settingsLoaded)
-                HyprlandService.setAnimationsEnabled(false, 0, 0, 0);
+                HyprlandService.setPowerSaverMode(true);
 
             HyprlandService.caffeineActive = false;
         } else {
@@ -83,7 +83,7 @@ Item {
             brightnessProc.command = ["brightnessctl", "s", "75%"];
             brightnessProc.running = true;
             if (SettingsService.settingsLoaded)
-                HyprlandService.setAnimationsEnabled(true, 1, 1, 10);
+                HyprlandService.setPowerSaverMode(false);
 
         }
         if (SettingsService.settingsLoaded)

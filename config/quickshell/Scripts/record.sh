@@ -5,7 +5,6 @@ export WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-1}
 export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 export XDG_CURRENT_DESKTOP=Hyprland
 
-LOG="/tmp/record_debug.log"
 echo "--- Record started at $(date) ---" >>"$LOG"
 
 # Output directory
@@ -65,9 +64,9 @@ fi
 # Run wf-recorder
 if [ "$AUDIO" != "none" ]; then
   pactl set-source-mute "$AUDIO" false
-  wf-recorder $TARGET --audio="$AUDIO" -x yuv420p -p color_range=tv -p color_primaries=bt709 -p color_trc=bt709 -p colorspace=bt709 -c libx264 -f "$FILENAME" >>"$LOG" 2>&1
+  wf-recorder $TARGET --audio="$AUDIO" -x yuv420p -p color_range=tv -p color_primaries=bt709 -p color_trc=bt709 -p colorspace=bt709 -c libx264 -f "$FILENAME"
 else
-  wf-recorder $TARGET -x yuv420p -p color_range=tv -p color_primaries=bt709 -p color_trc=bt709 -p colorspace=bt709 -c libx264 -f "$FILENAME" >>"$LOG" 2>&1
+  wf-recorder $TARGET -x yuv420p -p color_range=tv -p color_primaries=bt709 -p color_trc=bt709 -p colorspace=bt709 -c libx264 -f "$FILENAME"
 fi
 
 echo "wf-recorder exited with code $?" >>"$LOG"
