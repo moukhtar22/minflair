@@ -142,8 +142,6 @@ export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 eval "$(starship init zsh)"
 eval "$(fnm env --use-on-cd --shell zsh)"
 
-# pokemon-colorscripts -r --no-title
-
 # Add an empty line before each prompt, except the first one
 function add_newline_precmd() {
     if [[ -z "$_NEW_LINE_BEFORE_PROMPT" ]]; then

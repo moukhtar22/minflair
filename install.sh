@@ -77,7 +77,6 @@ aur_dependencies=(
   sddm-theme-tokyo-night-git
   tela-circle-icon-theme-dracula-git
   xxhash
-  pokemon-colorscripts-git
   aw-awatcher
   activitywatch-bin
   otf-geist

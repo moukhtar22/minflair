@@ -2,6 +2,7 @@
 
 if [ -f "/tmp/volume_notification_id" ]; then
   NOTIFY_ID=$(cat "/tmp/volume_notification_id")
+  [ -z "$NOTIFY_ID" ] && NOTIFY_ID=0
 else
   NOTIFY_ID=0
 fi
@@ -37,6 +38,7 @@ MUTED=$(echo "$VOLUME_INFO" | grep -q "MUTED" && echo "yes" || echo "no")
 if [ "$1" = "mic-mute" ]; then
   if [ -f "/tmp/mic_notification_id" ]; then
     MIC_NOTIFY_ID=$(cat "/tmp/mic_notification_id")
+    [ -z "$MIC_NOTIFY_ID" ] && MIC_NOTIFY_ID=0
   else
     MIC_NOTIFY_ID=0
   fi
