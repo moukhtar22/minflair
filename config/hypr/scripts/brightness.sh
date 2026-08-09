@@ -2,6 +2,7 @@
 
 if [ -f "/tmp/brightness_notification_id" ]; then
   NOTIFY_ID=$(cat "/tmp/brightness_notification_id")
+  [ -z "$NOTIFY_ID" ] && NOTIFY_ID=0
 else
   NOTIFY_ID=0
 fi
