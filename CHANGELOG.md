@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-09
+
+### Added
+- New utility SVG icons (`clipboard.svg`, `keyboard.svg`, `edit-filled.svg`) for the Settings UI.
+
+### Changed
+- Modularized the Settings application architecture by splitting large monolithic files into dedicated subdirectories.
+- Redesigned `AnimatedMinflair.qml` and `MiniMusicWidget.qml` components for a modern look.
+- Updated gradients and paths for `settings-icon.svg` and `keybinds-icon.svg`.
+- Prevented a potential double-close bug in `NotificationData.qml`.
+
+## [1.2.2] - 2026-08-09
+
+### Fixed
+- Fixed an issue in `brightness.sh` and `volume.sh` where empty notification IDs would cause unexpected behavior.
+
+### Removed
+- Removed `pokemon-colorscripts` from `.zshrc` and `install.sh` to reduce bloat.
+
 ## [1.2.1] - 2026-08-07
 
 ### Fixed
