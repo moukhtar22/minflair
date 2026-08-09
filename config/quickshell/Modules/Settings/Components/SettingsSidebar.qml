@@ -28,7 +28,15 @@ Rectangle {
         "icon": "apps"
     }, {
         "index": 4,
-        "label": "System & Input",
+        "label": "Input & Clipboard",
+        "icon": "edit"
+    }, {
+        "index": 5,
+        "label": "Update Preferences",
+        "icon": "update"
+    }, {
+        "index": 6,
+        "label": "System Info",
         "icon": "info"
     }]
 

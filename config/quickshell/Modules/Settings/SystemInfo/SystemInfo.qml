@@ -1,14 +1,10 @@
-import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Io
 import qs.Core
 import qs.Core.Components
 import qs.Core.Services
 import qs.Modules.Settings.Components
 
-ColumnLayout {
+SettingContainer {
     id: root
 
     property string osName: SystemInfoService.osName
@@ -36,8 +32,6 @@ ColumnLayout {
     property string gpuVram: SystemStats.gpuVram
     property string username: SystemStats.username
 
-    spacing: Constants.sizeLg
-
     ColumnLayout {
         spacing: Constants.sizeSm
         Layout.fillWidth: true
@@ -47,8 +41,6 @@ ColumnLayout {
 
         AnimatedMinflair {
             iconSize: 96
-            iconColor: Theme.fg
-            extraAnimated: true
             Layout.alignment: Qt.AlignHCenter
         }
 
