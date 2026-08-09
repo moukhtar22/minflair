@@ -317,7 +317,7 @@ Card {
                                 MprisService.activePlayer.togglePlaying();
                             else if (mouse.button === Qt.RightButton)
                                 MprisService.killConfiguredPlayer();
-                        } else if (mouse.button === Qt.LeftButton) {
+                        } else {
                             playerLauncher.command = SettingsService.musicPlayerCommand.split(" ");
                             playerLauncher.running = true;
                         }

@@ -29,7 +29,7 @@ BarButton {
         Behavior on scale {
             NumberAnimation {
                 duration: Constants.animFast
-                easing.type: Easing.OutQuad
+                easing.type: Easing.OutQuads
             }
 
         }

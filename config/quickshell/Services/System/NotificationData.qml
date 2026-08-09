@@ -99,6 +99,7 @@ QtObject {
     }
 
     function close() {
+        if (closed) return;
         closed = true;
         popup = false;
         notification?.dismiss();

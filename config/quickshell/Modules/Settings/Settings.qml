@@ -9,6 +9,13 @@ import qs.Core
 import qs.Core.Components
 import qs.Core.Services
 import qs.Core.Windows
+import qs.Modules.Settings.EffectsSettings
+import qs.Modules.Settings.InputAndClipboardSettings
+import qs.Modules.Settings.IntegrationsSettings
+import qs.Modules.Settings.PersonalizationSettings
+import qs.Modules.Settings.SystemInfo
+import qs.Modules.Settings.UpdatePreferences
+import qs.Modules.Settings.WindowSettings
 
 AppWindow {
     id: root
@@ -16,7 +23,7 @@ AppWindow {
     property int activeTab: 0
     property int lastTab: 0
     property int animOff: 0
-    property var pageComponents: [personalizationComp, effectsComp, windowComp, integrationsComp, systemInputComp]
+    property var pageComponents: [personalizationComp, effectsComp, windowComp, integrationsComp, inputAndClipboardComp, updatePreferencesComp, systemInfoComp]
     property string powerProfile: SystemInfoService.powerProfile
     property string batteryStatus: SystemInfoService.batteryStatus
     property string batteryPercentage: SystemInfoService.batteryPercentage
@@ -128,9 +135,27 @@ AppWindow {
     }
 
     Component {
-        id: systemInputComp
+        id: inputAndClipboardComp
 
-        SystemInputSettings {
+        InputAndClipboardSettings {
+            anchors.fill: parent
+        }
+
+    }
+
+    Component {
+        id: updatePreferencesComp
+
+        UpdatePreferences {
+            anchors.fill: parent
+        }
+
+    }
+
+    Component {
+        id: systemInfoComp
+
+        SystemInfo {
             anchors.fill: parent
         }
 

@@ -7,9 +7,8 @@ Item {
     id: root
 
     property int iconSize: 32
-    property color iconColor: Theme.fg
-    property bool extraAnimated: false
-    property string starPath: "M 12 2 C 14 8, 15 12, 22 12 C 16 14, 12 15, 12 22 C 10 16, 9 12, 2 12 C 8 10, 12 9, 12 2 Z"
+    property color iconColor: Theme.accent
+    property string plusStarPath: "M 11.6 2.5 Q 12 1.2 12.4 2.5 L 14 10 L 21.5 11.6 Q 22.8 12 21.5 12.4 L 14 14 L 12.4 21.5 Q 12 22.8 11.6 21.5 L 10 14 L 2.5 12.4 Q 1.2 12 2.5 11.6 L 10 10 Z"
 
     width: iconSize
     height: iconSize
@@ -23,59 +22,27 @@ Item {
         anchors.centerIn: parent
         enabled: false
 
-        Shape {
+        Item {
             id: mainStarShape
 
             width: 24
             height: 24
             transformOrigin: Item.Center
-            preferredRendererType: Shape.CurveRenderer
+            rotation: 0
 
-            ShapePath {
-                fillColor: root.iconColor
-                strokeColor: "transparent"
+            Shape {
+                width: 24
+                height: 24
+                preferredRendererType: Shape.CurveRenderer
+                opacity: 1
 
-                PathSvg {
-                    path: root.starPath
-                }
+                ShapePath {
+                    fillColor: root.iconColor
+                    strokeColor: "transparent"
+                    strokeWidth: 0
 
-            }
-
-        }
-
-        Shape {
-            id: cyanStarShape
-
-            width: 24
-            height: 24
-            x: 7
-            y: -7
-            scale: 0.4
-            transformOrigin: Item.Center
-            opacity: 0
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeColor: "transparent"
-
-                PathSvg {
-                    path: root.starPath
-                }
-
-                fillGradient: LinearGradient {
-                    x1: 0
-                    y1: 0
-                    x2: 24
-                    y2: 24
-
-                    GradientStop {
-                        position: 0
-                        color: Theme.accent
-                    }
-
-                    GradientStop {
-                        position: 1
-                        color: Theme.accentComplementary
+                    PathSvg {
+                        path: root.plusStarPath
                     }
 
                 }
@@ -84,68 +51,32 @@ Item {
 
         }
 
-        Shape {
-            id: tinyStarShape
+        Item {
+            id: xStarShape
 
             width: 24
             height: 24
-            x: -6
-            y: 6
-            scale: 0.2
             transformOrigin: Item.Center
-            opacity: 0
-            preferredRendererType: Shape.CurveRenderer
+            rotation: 45
+            scale: 0.78
 
-            ShapePath {
-                fillColor: root.iconColor
-                strokeColor: "transparent"
+            Shape {
+                width: 24
+                height: 24
+                preferredRendererType: Shape.CurveRenderer
+                opacity: 1
 
-                PathSvg {
-                    path: root.starPath
+                ShapePath {
+                    fillColor: root.iconColor
+                    strokeColor: "transparent"
+                    strokeWidth: 0
+
+                    PathSvg {
+                        path: root.plusStarPath
+                    }
+
                 }
 
-            }
-
-        }
-
-        SequentialAnimation {
-            loops: Animation.Infinite
-            running: HyprlandService.enableAnimations
-
-            NumberAnimation {
-                target: cyanStarShape
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 600
-                easing.type: Easing.InOutSine
-            }
-
-            NumberAnimation {
-                target: cyanStarShape
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 600
-                easing.type: Easing.InOutSine
-            }
-
-            NumberAnimation {
-                target: tinyStarShape
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 700
-                easing.type: Easing.InOutSine
-            }
-
-            NumberAnimation {
-                target: tinyStarShape
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 700
-                easing.type: Easing.InOutSine
             }
 
         }
@@ -155,44 +86,82 @@ Item {
 
             running: HyprlandService.enableAnimations
 
-            ParallelAnimation {
-                NumberAnimation {
-                    target: mainStarShape
-                    property: "scale"
-                    from: 0
-                    to: 1.2
-                    duration: 800
-                    easing.type: Easing.OutQuart
-                }
+            PropertyAction {
+                target: mainStarShape
+                property: "scale"
+                value: 0
+            }
 
-                NumberAnimation {
-                    target: mainStarShape
-                    property: "rotation"
-                    from: -180
-                    to: 10
-                    duration: 800
-                    easing.type: Easing.OutQuart
-                }
+            PropertyAction {
+                target: xStarShape
+                property: "scale"
+                value: 0
+            }
 
+            PropertyAction {
+                target: mainStarShape
+                property: "rotation"
+                value: -360
+            }
+
+            PropertyAction {
+                target: xStarShape
+                property: "rotation"
+                value: -315
+            }
+
+            PauseAnimation {
+                duration: 200
             }
 
             ParallelAnimation {
-                NumberAnimation {
-                    target: mainStarShape
-                    property: "scale"
-                    from: 1.2
-                    to: 1
-                    duration: 600
-                    easing.type: Easing.OutBack
+                ParallelAnimation {
+                    NumberAnimation {
+                        target: mainStarShape
+                        property: "scale"
+                        to: 1
+                        duration: 900
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1.2
+                    }
+
+                    NumberAnimation {
+                        target: mainStarShape
+                        property: "rotation"
+                        to: 0
+                        duration: 900
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1.2
+                    }
+
                 }
 
-                NumberAnimation {
-                    target: mainStarShape
-                    property: "rotation"
-                    from: 10
-                    to: 0
-                    duration: 600
-                    easing.type: Easing.OutBack
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: 150
+                    }
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: xStarShape
+                            property: "scale"
+                            to: 0.78
+                            duration: 900
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.2
+                        }
+
+                        NumberAnimation {
+                            target: xStarShape
+                            property: "rotation"
+                            to: 45
+                            duration: 900
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.2
+                        }
+
+                    }
+
                 }
 
             }
@@ -202,146 +171,35 @@ Item {
         SequentialAnimation {
             id: extraIdleAnim
 
-            running: HyprlandService.enableAnimations && root.extraAnimated && !introAnim.running
-            loops: Animation.Infinite
+            running: HyprlandService.enableAnimations && !introAnim.running
+            onRunningChanged: {
+                if (!running) {
+                    mainStarShape.scale = 1;
+                    xStarShape.scale = 0.78;
+                    mainStarShape.rotation = 0;
+                    xStarShape.rotation = 45;
+                }
+            }
 
-            ParallelAnimation {
-                SequentialAnimation {
-                    loops: Animation.Infinite
+            SequentialAnimation {
+                loops: Animation.Infinite
 
-                    NumberAnimation {
-                        target: mainStarShape
-                        property: "scale"
-                        from: 1
-                        to: 1.05
-                        duration: 2500
-                        easing.type: Easing.InOutQuad
-                    }
-
-                    NumberAnimation {
-                        target: mainStarShape
-                        property: "scale"
-                        from: 1.05
-                        to: 1
-                        duration: 2500
-                        easing.type: Easing.InOutQuad
-                    }
-
+                NumberAnimation {
+                    target: xStarShape
+                    property: "scale"
+                    from: 0.78
+                    to: 0.5
+                    duration: 1500
+                    easing.type: Easing.InOutSine
                 }
 
-                SequentialAnimation {
-                    loops: Animation.Infinite
-
-                    NumberAnimation {
-                        target: mainStarShape
-                        property: "rotation"
-                        from: 0
-                        to: 3
-                        duration: 2500
-                        easing.type: Easing.InOutQuad
-                    }
-
-                    NumberAnimation {
-                        target: mainStarShape
-                        property: "rotation"
-                        from: 3
-                        to: 0
-                        duration: 2500
-                        easing.type: Easing.InOutQuad
-                    }
-
-                }
-
-                SequentialAnimation {
-                    loops: Animation.Infinite
-
-                    NumberAnimation {
-                        target: cyanStarShape
-                        property: "y"
-                        from: -7
-                        to: -8.5
-                        duration: 2000
-                        easing.type: Easing.InOutQuad
-                    }
-
-                    NumberAnimation {
-                        target: cyanStarShape
-                        property: "y"
-                        from: -8.5
-                        to: -7
-                        duration: 2000
-                        easing.type: Easing.InOutQuad
-                    }
-
-                }
-
-                SequentialAnimation {
-                    loops: Animation.Infinite
-
-                    NumberAnimation {
-                        target: cyanStarShape
-                        property: "scale"
-                        from: 0.4
-                        to: 0.46
-                        duration: 2000
-                        easing.type: Easing.InOutQuad
-                    }
-
-                    NumberAnimation {
-                        target: cyanStarShape
-                        property: "scale"
-                        from: 0.46
-                        to: 0.4
-                        duration: 2000
-                        easing.type: Easing.InOutQuad
-                    }
-
-                }
-
-                SequentialAnimation {
-                    loops: Animation.Infinite
-
-                    NumberAnimation {
-                        target: tinyStarShape
-                        property: "y"
-                        from: 6
-                        to: 8
-                        duration: 2800
-                        easing.type: Easing.InOutQuad
-                    }
-
-                    NumberAnimation {
-                        target: tinyStarShape
-                        property: "y"
-                        from: 8
-                        to: 6
-                        duration: 2800
-                        easing.type: Easing.InOutQuad
-                    }
-
-                }
-
-                SequentialAnimation {
-                    loops: Animation.Infinite
-
-                    NumberAnimation {
-                        target: tinyStarShape
-                        property: "scale"
-                        from: 0.2
-                        to: 0.22
-                        duration: 2800
-                        easing.type: Easing.InOutQuad
-                    }
-
-                    NumberAnimation {
-                        target: tinyStarShape
-                        property: "scale"
-                        from: 0.22
-                        to: 0.2
-                        duration: 2800
-                        easing.type: Easing.InOutQuad
-                    }
-
+                NumberAnimation {
+                    target: xStarShape
+                    property: "scale"
+                    from: 0.5
+                    to: 0.78
+                    duration: 1500
+                    easing.type: Easing.InOutSine
                 }
 
             }

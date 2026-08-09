@@ -1,5 +1,3 @@
-import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Core
 import qs.Core.Components
@@ -40,7 +38,11 @@ SettingContainer {
                 return idx !== -1 ? idx : 0;
             }
             onActivated: (index) => {
-                SettingsService.musicPlayer = model[index];
+                let player = model[index];
+                SettingsService.musicPlayer = player;
+                if (player !== "custom")
+                    SettingsService.musicPlayerCommand = player;
+
             }
             iconMap: {
                 "spotify": "spotify",
